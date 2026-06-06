@@ -13,6 +13,9 @@ This project is designed as a clean AI/ML internship portfolio project: heavy pr
 
 The portfolio website is inside [`docs/`](docs/).
 
+It includes an interviewer-ready prediction demo where you can enter station readings
+and instantly show predicted `PM2.5`, `PM10`, and `SO2` values in the browser.
+
 After pushing to GitHub, enable GitHub Pages from the `docs/` folder. The expected public URL will be:
 
 ```text
@@ -185,6 +188,7 @@ Evaluation:
 
 The project website presents:
 
+- Input form and prediction-result demo
 - Verified dataset statistics
 - Workflow and technology stack
 - Demo model plots
