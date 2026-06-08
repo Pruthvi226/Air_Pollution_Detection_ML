@@ -435,7 +435,7 @@ AirSense AI cleans raw pollution data, engineers time-series features, trains fo
 - Email or WhatsApp alerts
 - Model monitoring and retraining
 
-## Interview Demo Script
+## Conclusion
 
 AirSense AI is an end-to-end air pollution forecasting dashboard. I processed 586,431 cleaned records from four monitoring regions and engineered 202 features for predicting PM2.5, PM10, and SO2. The boosted quarter-hourly LightGBM run achieved held-out R2 of 0.978 for PM2.5 and 0.883 for PM10, while SO2 reached low MAE of 0.55 but remains spike-sensitive. The dashboard presents these results with AQI risk interpretation, anomaly detection, and explainability so the project works like an AI monitoring product instead of just a notebook.
 
