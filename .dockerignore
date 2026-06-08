@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+.git/
+
+data/raw/
+data/processed/
+outputs/**/predictions/
+
+ML_PROJECT/
+source_repo/
+*.zip

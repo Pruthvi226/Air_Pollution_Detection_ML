@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AirSense AI - Multi-Region Air Pollution Prediction</title>
+    <meta
+      name="description"
+      content="A machine-learning project that combines DCR air-quality records from AIIMS, Bhatagaon, IGKV, and SILTARA to forecast PM2.5, PM10, and SO2."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top">AirSense AI</a>
+      <nav aria-label="Project sections">
+        <a href="#demo">Demo</a>
+        <a href="#dataset">Dataset</a>
+        <a href="#pipeline">Pipeline</a>
+        <a href="#results">Results</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <p class="eyebrow">AI / ML Internship Portfolio Project</p>
+          <h1 id="hero-title">AirSense AI</h1>
+          <p class="hero-copy">
+            Multi-region air-pollution forecasting that cleans real DCR workbooks from
+            four Raipur monitoring regions and predicts future PM2.5, PM10, and SO2 levels.
+          </p>
+          <div class="hero-actions" aria-label="Project links">
+            <a href="#demo">Try Prediction Demo</a>
+            <a href="../README.md">Read Project Docs</a>
+            <a href="../notebooks/air_pollution_prediction_colab.ipynb">Open Colab Notebook</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="status-band" aria-label="Project status">
+        <div>
+          <span class="status-label">Project demo</span>
+          <strong>Interactive prediction walkthrough with deployable ML app packaging</strong>
+        </div>
+        <p>
+          Show the full workflow in one place: raw DCR data preparation, feature engineering,
+          prediction inputs, model outputs, visual evaluation artifacts, and dashboard/API readiness.
+        </p>
+      </section>
+
+      <section class="section demo-section" id="demo" aria-labelledby="demo-title">
+        <div class="section-heading">
+          <p class="eyebrow">Interviewer Demo</p>
+          <h2 id="demo-title">Input station readings and show a next-step prediction</h2>
+          <p>
+            This browser demo mirrors the project workflow with region, pollutant, weather,
+            and time inputs. The production model is trained in Python and served through the
+            Streamlit/API app; this page uses a lightweight client-side estimator for GitHub Pages.
+          </p>
+        </div>
+
+        <div class="demo-layout">
+          <form class="predictor" id="prediction-form">
+            <div class="form-row">
+              <label for="region">Region</label>
+              <select id="region" name="region">
+                <option value="AIIMS">AIIMS</option>
+                <option value="BHATAGAON">Bhatagaon</option>
+                <option value="IGKV">IGKV</option>
+                <option value="SILTARA">SILTARA</option>
+              </select>
+            </div>
+
+            <div class="input-grid">
+              <label>
+                PM2.5 now
+                <input id="pm25" name="pm25" type="number" min="0" max="600" step="0.1" value="38" />
+              </label>
+              <label>
+                PM10 now
+                <input id="pm10" name="pm10" type="number" min="0" max="800" step="0.1" value="112" />
+              </label>
+              <label>
+                SO2 now
+                <input id="so2" name="so2" type="number" min="0" max="150" step="0.1" value="18" />
+              </label>
+              <label>
+                Temperature
+                <input id="temp" name="temp" type="number" min="0" max="55" step="0.1" value="31" />
+              </label>
+              <label>
+                Humidity
+                <input id="humidity" name="humidity" type="number" min="0" max="100" step="0.1" value="58" />
+              </label>
+              <label>
+                Wind speed
+                <input id="wind" name="wind" type="number" min="0" max="30" step="0.1" value="3.2" />
+              </label>
+              <label>
+                Hour
+                <input id="hour" name="hour" type="number" min="0" max="23" step="1" value="18" />
+              </label>
+              <label>
+                Month
+                <input id="month" name="month" type="number" min="1" max="12" step="1" value="11" />
+              </label>
+            </div>
+
+            <div class="preset-row" aria-label="Example input presets">
+              <button type="button" data-preset="clean">Clean</button>
+              <button type="button" data-preset="traffic">Traffic</button>
+              <button type="button" data-preset="industrial">Industrial</button>
+            </div>
+          </form>
+
+          <aside class="prediction-panel" aria-live="polite">
+            <div class="prediction-header">
+              <span>Next-step forecast</span>
+              <strong id="risk-label">Moderate</strong>
+            </div>
+
+            <div class="prediction-cards">
+              <article>
+                <span>PM2.5</span>
+                <strong id="pred-pm25">0.0</strong>
+                <small>ug/m3</small>
+              </article>
+              <article>
+                <span>PM10</span>
+                <strong id="pred-pm10">0.0</strong>
+                <small>ug/m3</small>
+              </article>
+              <article>
+                <span>SO2</span>
+                <strong id="pred-so2">0.0</strong>
+                <small>ug/m3</small>
+              </article>
+            </div>
+
+            <div class="bar-chart" aria-label="Predicted pollutant levels">
+              <div>
+                <span>PM2.5</span>
+                <div class="bar-track"><i id="bar-pm25"></i></div>
+              </div>
+              <div>
+                <span>PM10</span>
+                <div class="bar-track"><i id="bar-pm10"></i></div>
+              </div>
+              <div>
+                <span>SO2</span>
+                <div class="bar-track"><i id="bar-so2"></i></div>
+              </div>
+            </div>
+
+            <p id="prediction-summary" class="prediction-summary"></p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section" id="dataset" aria-labelledby="dataset-title">
+        <div class="section-heading">
+          <p class="eyebrow">Verified Data Build</p>
+          <h2 id="dataset-title">One combined dataset from four raw DCR archives</h2>
+          <p>
+            The project converts inconsistent Excel workbooks into a single modeling table
+            with region labels, normalized columns, clean timestamps, and duplicate handling.
+          </p>
+        </div>
+
+        <div class="metric-grid">
+          <article class="metric">
+            <span>Total rows</span>
+            <strong>586,431</strong>
+            <p>Cleaned rows after regional merge and all-region concatenation.</p>
+          </article>
+          <article class="metric">
+            <span>Quarter-hourly rows</span>
+            <strong>467,188</strong>
+            <p>Main data resolution for the final forecasting workflow.</p>
+          </article>
+          <article class="metric">
+            <span>Hourly rows</span>
+            <strong>119,243</strong>
+            <p>Used for the quick local validation run and sanity checks.</p>
+          </article>
+          <article class="metric">
+            <span>Regions</span>
+            <strong>4</strong>
+            <p>AIIMS, Bhatagaon, IGKV, and SILTARA monitoring stations.</p>
+          </article>
+        </div>
+
+        <div class="table-wrap" role="region" aria-label="Region dataset summary" tabindex="0">
+          <table>
+            <thead>
+              <tr>
+                <th>Region</th>
+                <th>Rows</th>
+                <th>Hourly</th>
+                <th>Quarter-hourly</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>AIIMS</td>
+                <td>154,109</td>
+                <td>30,000</td>
+                <td>124,109</td>
+              </tr>
+              <tr>
+                <td>Bhatagaon</td>
+                <td>147,966</td>
+                <td>29,395</td>
+                <td>118,571</td>
+              </tr>
+              <tr>
+                <td>IGKV</td>
+                <td>151,801</td>
+                <td>29,891</td>
+                <td>121,910</td>
+              </tr>
+              <tr>
+                <td>SILTARA</td>
+                <td>132,555</td>
+                <td>29,957</td>
+                <td>102,598</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section section-muted" id="pipeline" aria-labelledby="pipeline-title">
+        <div class="section-heading">
+          <p class="eyebrow">Workflow</p>
+          <h2 id="pipeline-title">Built like a real machine-learning pipeline</h2>
+          <p>
+            The code is structured so the same workflow can run locally for validation and in
+            Colab for the full data-heavy modeling pass.
+          </p>
+        </div>
+
+        <div class="process">
+          <article>
+            <span>01</span>
+            <h3>Extract raw archives</h3>
+            <p>Reads the four DCR zip files and discovers station folders automatically.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Normalize workbooks</h3>
+            <p>Handles .xlsx, .xls, and .xlsb files, daily sheets, headers, and timestamps.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>Build combined dataset</h3>
+            <p>Adds a region label and writes the combined CSV with dataset reports.</p>
+          </article>
+          <article>
+            <span>04</span>
+            <h3>Train forecasting models</h3>
+            <p>Creates time features, lag features, rolling stats, and pollutant targets.</p>
+          </article>
+        </div>
+
+        <div class="tech-strip" aria-label="Technologies used">
+          <span>Python</span>
+          <span>Pandas</span>
+          <span>Scikit-learn</span>
+          <span>Time-series features</span>
+          <span>Random Forest</span>
+          <span>Colab</span>
+        </div>
+      </section>
+
+      <section class="section" id="results" aria-labelledby="results-title">
+        <div class="section-heading">
+          <p class="eyebrow">Modeling Evidence</p>
+          <h2 id="results-title">Demo outputs from the validated local run</h2>
+          <p>
+            These plots come from a fast hourly smoke run used to verify the end-to-end model
+            workflow. Replace them with final quarter-hourly Colab results after the full run.
+          </p>
+        </div>
+
+        <div class="result-grid">
+          <figure>
+            <img src="assets/metric_comparison.png" alt="Bar chart comparing RMSE and MAE for pollutants" />
+            <figcaption>Overall test metric comparison for multi-output and single-target models.</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/best_strategy_rmse_heatmap.png" alt="Heatmap of best RMSE by region and pollutant" />
+            <figcaption>Region-wise best strategy heatmap, useful for model interpretation.</figcaption>
+          </figure>
+          <figure class="wide">
+            <img src="assets/region_prediction_timeseries.png" alt="Actual and predicted pollutant values over time by region" />
+            <figcaption>Time-series prediction samples across AIIMS, Bhatagaon, IGKV, and SILTARA.</figcaption>
+          </figure>
+        </div>
+
+        <div class="score-line">
+          <div>
+            <span>Best PM10 demo R2</span>
+            <strong>0.58</strong>
+          </div>
+          <div>
+            <span>Best SO2 demo R2</span>
+            <strong>0.43</strong>
+          </div>
+          <div>
+            <span>Engineered features</span>
+            <strong>201</strong>
+          </div>
+          <div>
+            <span>Smoke test rows</span>
+            <strong>104,791</strong>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>AirSense AI | Python | Pandas | Scikit-learn | Streamlit | FastAPI</p>
+    </footer>
+    <script src="app.js"></script>
+  </body>
+</html>

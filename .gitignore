@@ -1,0 +1,29 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+.git_broken_backup_*/
+push_staging*/
+
+# Raw and generated data can be large. Keep code in GitHub and regenerate these.
+data/raw/
+data/processed/
+outputs/*
+!outputs/.gitkeep
+*.zip
+*.joblib
+!outputs/smoke_air_quality_models/
+outputs/smoke_air_quality_models/*
+!outputs/smoke_air_quality_models/models/
+outputs/smoke_air_quality_models/models/*
+!outputs/smoke_air_quality_models/models/inference_bundle.joblib
+
+# Temporary import artifacts from the source project download.
+ML_PROJECT/
+source_repo/
+ML_PROJECT_source.zip
+
+!.gitignore
+!data/.gitkeep
+!outputs/.gitkeep
