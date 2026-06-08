@@ -1,127 +1,264 @@
-# AirSense AI - Multi-Region Air Quality Forecasting
+# AirSense AI
+
+## Multi-Region Air Quality Forecasting and Risk Intelligence
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-Data%20Engineering-150458?style=for-the-badge&logo=pandas&logoColor=white)
 ![Scikit-learn](https://img.shields.io/badge/Scikit--learn-ML%20Forecasting-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)
-![Colab](https://img.shields.io/badge/Google%20Colab-Heavy%20Training-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=black)
+![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Website-222222?style=for-the-badge&logo=githubpages&logoColor=white)
 
-AirSense AI is an end-to-end AI/ML project for multi-region air-quality forecasting, AQI-style risk intelligence, pollution spike detection, and explainable pollution analytics.
+AirSense AI is a complete machine-learning project that converts real multi-region air-quality monitoring workbooks into a deployable forecasting and risk-intelligence system.
 
-It converts messy DCR air-quality workbooks from four Raipur monitoring regions into a combined time-series dataset, engineers leakage-safe forecasting features, trains models for `PM2.5`, `PM10`, and `SO2`, explains predictions, and serves results through Streamlit, FastAPI, and a CLI.
+The project cleans raw DCR files from four Raipur monitoring regions, builds a combined time-series dataset, engineers leakage-safe forecasting features, trains models for `PM2.5`, `PM10`, and `SO2`, explains predictions, detects pollution spikes, and serves the result through a professional website, Streamlit dashboard, FastAPI service, and CLI predictor.
 
-This project is designed as a professional ML case study: heavy preprocessing, feature engineering, predictive modeling, evaluation, visual reporting, a Streamlit dashboard, a FastAPI prediction endpoint, and a website-ready project presentation.
+## Live Website
 
-## Live Project Website
+The GitHub Pages-ready website is in [`docs/`](docs/).
 
-The portfolio website is inside [`docs/`](docs/).
-
-It includes an interactive forecast preview where you can enter station readings
-and instantly view predicted `PM2.5`, `PM10`, and `SO2` values in the browser.
-
-After pushing to GitHub, enable GitHub Pages from the `docs/` folder. The expected public URL will be:
+Expected public URL after GitHub Pages is enabled from the `docs/` folder:
 
 ```text
 https://pruthvi226.github.io/Air_Pollution_Detection_ML/
 ```
 
-## Key Features
-
-- DCR zip and workbook ingestion for inconsistent `.xlsx`, `.xls`, and `.xlsb` files.
-- Timestamp parsing, header detection, duplicate handling, and multi-region dataset building.
-- Leakage-safe time-series features: lags, rolling statistics, cyclic time encodings, and region indicators.
-- Multi-output and single-target forecasting for PM2.5, PM10, and SO2.
-- AQI-style risk category and health recommendation layer.
-- Pollution spike/anomaly alerts for unusually high predicted values.
-- Explainability through tree feature importance with graceful optional-SHAP fallback.
-- Streamlit dashboard with Overview, Live Prediction, Region Analytics, Model Performance, Explainability, Anomaly Detection, AI Report, and Project Details tabs.
-- FastAPI endpoint with `/health`, `/metadata`, and `/predict`.
-- CLI predictor, tests, Dockerfile, Render config, model card, and experiment report.
-
-## Deployable App Layer
-
-The trained runtime now uses one portable artifact:
+Local static preview:
 
 ```text
-outputs/<run>/models/inference_bundle.joblib
+docs/index.html
 ```
 
-That same bundle powers:
+Streamlit dashboard:
 
-- Streamlit dashboard: [`app/streamlit_app.py`](app/streamlit_app.py)
-- FastAPI endpoint: [`app/api.py`](app/api.py)
-- CLI predictor: [`scripts/predict_cli.py`](scripts/predict_cli.py)
-- Reusable inference package: [`airsense/`](airsense/)
+```powershell
+streamlit run app\streamlit_app.py
+```
 
-Set `AIRSENSE_MODEL_DIR` to choose which trained run to serve. By default, the app looks for `outputs/air_quality_models` and then `outputs/smoke_air_quality_models`.
+## Project Snapshot
 
-## What This Project Shows
+| Area | What was built |
+|---|---|
+| Data engineering | Raw DCR zip/workbook extraction, sheet parsing, timestamp normalization, duplicate handling, and all-region merge |
+| Forecasting | Next-step prediction for `PM2.5`, `PM10`, and `SO2` |
+| Feature engineering | Time features, cyclic encodings, lag features, rolling means, rolling standard deviations, region indicators |
+| Evaluation | Chronological train/validation/test split, RMSE, MAE, R2, region-wise metrics, plots, reports |
+| Risk layer | AQI-style category, health recommendation, and pollutant driver summary |
+| Anomaly layer | Spike detection for elevated PM2.5, PM10, and SO2 scenarios |
+| Explainability | Tree feature-importance summaries with graceful fallback if optional SHAP tooling is unavailable |
+| Applications | Streamlit dashboard, FastAPI API, CLI predictor, GitHub Pages website |
+| Deployment | Dockerfile, Render config, reusable model artifact, Colab notebook, tests |
 
-- Real-world data cleaning from inconsistent `.xlsx`, `.xls`, and `.xlsb` workbooks.
-- Automated extraction from station-wise DCR zip archives.
-- Header detection, sheet filtering, timestamp parsing, and duplicate timestamp handling.
-- Combined multi-region dataset creation with `region` labels.
-- Leakage-safe time-series feature engineering.
-- Baseline, multi-output, and single-target forecasting reports.
-- AQI-style risk intelligence, anomaly alerts, and explainability summaries.
-- Metrics, predictions, plots, and markdown/JSON experiment reports.
+## What We Have Done
 
-## Verified Dataset Build
+- Built a reproducible pipeline for inconsistent `.xlsx`, `.xls`, and `.xlsb` DCR workbooks.
+- Combined four regional monitoring datasets into one modeling-ready dataset.
+- Created a structured `airsense/` Python package for AQI logic, anomaly detection, inference, feature engineering, explainability, preprocessing, and modeling.
+- Trained baseline, multi-output, and single-target forecasting models.
+- Exported a portable `inference_bundle.joblib` artifact used by every runtime surface.
+- Added a Streamlit dashboard with:
+  - Overview
+  - Live Prediction
+  - Region Analytics
+  - Model Performance
+  - Explainability
+  - Anomaly Detection
+  - AI Report
+  - Project Details
+- Added a FastAPI app with:
+  - `/health`
+  - `/metadata`
+  - `/predict`
+- Added a CLI prediction script for terminal checks.
+- Added reports, model card, limitations, experiment summary, and deployment documentation.
+- Built a professional GitHub Pages website in `docs/`.
+- Added automated tests for important runtime behavior.
 
-The combined dataset was successfully prepared from the supplied DCR archives.
+## System Architecture
 
-| Region | Rows | Hourly | Quarter-hourly |
+```mermaid
+flowchart TD
+    A["Raw DCR zip archives"] --> B["Workbook extraction"]
+    B --> C["Sheet discovery and header normalization"]
+    C --> D["Timestamp parsing and duplicate handling"]
+    D --> E["All-region combined dataset"]
+    E --> F["Feature engineering"]
+    F --> G["Model training"]
+    G --> H["Evaluation reports and plots"]
+    G --> I["Inference bundle"]
+    I --> J["Streamlit dashboard"]
+    I --> K["FastAPI service"]
+    I --> L["CLI predictor"]
+    H --> M["GitHub Pages project website"]
+```
+
+## Data Coverage
+
+The combined dataset was prepared from four supplied DCR regional archives.
+
+| Region | Total rows | Hourly rows | Quarter-hourly rows |
 |---|---:|---:|---:|
 | AIIMS | 154,109 | 30,000 | 124,109 |
 | Bhatagaon | 147,966 | 29,395 | 118,571 |
 | IGKV | 151,801 | 29,891 | 121,910 |
 | SILTARA | 132,555 | 29,957 | 102,598 |
 
-Overall:
+Overall dataset:
 
-- Total rows: `586,431`
-- Quarter-hourly rows: `467,188`
-- Hourly rows: `119,243`
-- Regions: `AIIMS`, `BHATAGAON`, `IGKV`, `SILTARA`
+| Metric | Value |
+|---|---:|
+| Total cleaned rows | 586,431 |
+| Quarter-hourly rows | 467,188 |
+| Hourly rows | 119,243 |
+| Regions | 4 |
+| Forecast targets | 3 |
+| Engineered model features | 201 |
 
-Large raw and processed data files are intentionally ignored by Git. Recreate them locally or in Colab with the scripts below.
+Large raw and processed datasets are intentionally excluded from Git. Recreate them locally or in Colab with the provided scripts.
 
-## Project Structure
+## Modeling Approach
+
+### Targets
+
+- `pm2_5`
+- `pm10`
+- `so2`
+
+### Feature Families
+
+- Current pollutant readings
+- Weather readings
+- Date and time features
+- Cyclic hour, minute, weekday, month, and day-of-year encodings
+- Lag features
+- Rolling mean features
+- Rolling standard deviation features
+- Region one-hot indicators
+- Missing-value indicators through model imputation
+
+### Model Strategies
+
+| Strategy | Purpose |
+|---|---|
+| `baseline_median` | Simple benchmark to prove model lift over a naive baseline |
+| `multi_output` | One model predicts PM2.5, PM10, and SO2 together |
+| `single_target` | Separate model per pollutant |
+| `best` | Inference-time strategy selection by region and target |
+
+### Evaluation Design
+
+- Chronological split to reduce time-series leakage
+- Train, validation, and test reports
+- Overall metrics by target
+- Region-wise metrics by target
+- Model comparison leaderboard
+- Prediction plots and scatter plots
+- Reusable JSON and CSV reports
+
+## Application Layer
+
+The trained runtime is powered by one portable artifact:
+
+```text
+outputs/<run>/models/inference_bundle.joblib
+```
+
+That artifact is reused by:
+
+| Surface | File |
+|---|---|
+| Streamlit dashboard | [`app/streamlit_app.py`](app/streamlit_app.py) |
+| FastAPI prediction service | [`app/api.py`](app/api.py) |
+| CLI predictor | [`scripts/predict_cli.py`](scripts/predict_cli.py) |
+| Shared inference package | [`airsense/inference.py`](airsense/inference.py) |
+
+Set `AIRSENSE_MODEL_DIR` to choose which trained run to serve. By default, the runtime looks for `outputs/air_quality_models` first, then falls back to `outputs/smoke_air_quality_models`.
+
+## Website and Dashboard
+
+The project includes two user-facing experiences.
+
+### GitHub Pages Website
+
+The static website in [`docs/`](docs/) presents:
+
+- Live forecast preview
+- Dataset summary
+- Data and modeling pipeline
+- Model result plots
+- Explainability section
+- Anomaly detection section
+- AI report preview
+- Project capability mapping
+
+### Streamlit Dashboard
+
+The dashboard is the interactive application layer for local or deployed use:
+
+- Live Prediction with scenario loading
+- AQI-style risk cards
+- Region analytics
+- Model performance tables and plots
+- Feature-importance explainability
+- Anomaly review
+- Downloadable AI report
+- Project details and capability mapping
+
+## Visual Evidence
+
+### Metric Comparison
+
+![Metric comparison](docs/assets/metric_comparison.png)
+
+### Best Strategy Heatmap
+
+![Best strategy RMSE heatmap](docs/assets/best_strategy_rmse_heatmap.png)
+
+### Region Prediction Timeline
+
+![Region prediction time series](docs/assets/region_prediction_timeseries.png)
+
+## Repository Structure
 
 ```text
 docs/
-  index.html                         # GitHub Pages-ready portfolio website
-  styles.css                         # Website styling
-  assets/                            # Model plots used by the website
+  index.html
+  styles.css
+  app.js
+  assets/
 
 app/
-  streamlit_app.py                    # Deployable dashboard
-  api.py                              # FastAPI prediction service
+  streamlit_app.py
+  api.py
 
 airsense/
-  aqi.py                              # AQI-style risk labels and recommendations
-  anomaly.py                          # Pollution spike detection
-  explainability.py                   # Feature-importance explanations
-  features.py                         # Feature engineering utilities
-  inference.py                        # Shared prediction contract
-  modeling.py                         # Portable sklearn custom transformers
+  aqi.py
+  anomaly.py
+  config.py
+  data_ingestion.py
+  evaluation.py
+  explainability.py
+  features.py
+  inference.py
+  modeling.py
+  preprocessing.py
 
 notebooks/
   air_pollution_prediction_colab.ipynb
 
 scripts/
-  prepare_combined_dataset.py         # Extract zips and build the combined dataset
-  train_air_quality_models.py         # Train models and generate reports/plots
-  predict_cli.py                      # One-shot prediction smoke check
-  generate_reports.py                 # Compact metrics/leaderboard generator
-  smoke_test.py                       # Runtime smoke test
+  prepare_combined_dataset.py
+  train_air_quality_models.py
+  predict_cli.py
+  generate_reports.py
+  smoke_test.py
 
 data/
-  .gitkeep                            # Raw/processed datasets are generated locally
-  data_dictionary.md                  # Column and feature documentation
-  sample/sample_air_quality.csv       # Tiny sample contract file
+  data_dictionary.md
+  sample/
 
 outputs/
-  .gitkeep                            # Model artifacts and reports are generated locally
+  .gitkeep
 
 reports/
   model_card.md
@@ -131,48 +268,19 @@ reports/
 Dockerfile
 DEPLOYMENT.md
 render.yaml
-
 requirements.txt
 README.md
 ```
 
-## Workflow
+## Quick Start
 
-```text
-Raw DCR zip files
-        |
-        v
-Workbook extraction and sheet discovery
-        |
-        v
-Column normalization and timestamp parsing
-        |
-        v
-Duplicate timestamp merge
-        |
-        v
-All-region combined dataset
-        |
-        v
-Feature engineering
-        |
-        v
-Model training and evaluation
-        |
-        v
-Plots, reports, predictions, and website case study
-        |
-        v
-AQI risk, anomaly alerts, explanations, Streamlit dashboard, FastAPI endpoint, and CLI predictor
-```
-
-## Local Setup
+### 1. Install dependencies
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-Prepare the combined dataset:
+### 2. Build the combined dataset
 
 ```powershell
 python scripts\prepare_combined_dataset.py `
@@ -182,7 +290,7 @@ python scripts\prepare_combined_dataset.py `
   --zip "C:\Users\pruthviraj\Downloads\SILTARA DCR-20260606T154006Z-3-001.zip"
 ```
 
-Run a fast local model check:
+### 3. Train a fast local model
 
 ```powershell
 python scripts\train_air_quality_models.py `
@@ -193,37 +301,45 @@ python scripts\train_air_quality_models.py `
   --n-jobs 1
 ```
 
-Run the dashboard:
+### 4. Run the Streamlit dashboard
 
 ```powershell
 streamlit run app\streamlit_app.py
 ```
 
-Run the API:
+### 5. Run the FastAPI service
 
 ```powershell
 uvicorn app.api:app --host 0.0.0.0 --port 8000
 ```
 
-Run a CLI prediction:
+### 6. Run a CLI prediction
 
 ```powershell
 python scripts\predict_cli.py --region SILTARA --pm25 78 --pm10 145 --so2 14 --temp 31 --hum 62 --ws 2.1
 ```
 
-Run tests:
+### 7. Run tests
 
 ```powershell
-pytest -q
+python -m pytest -q tests
 ```
 
-API request:
+## API Example
 
 ```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/predict -ContentType "application/json" -Body '{"region":"SILTARA","pm25":78,"pm10":145,"so2":14,"temperature":31,"humidity":62,"wind_speed":2.1,"timestamp":"2026-06-08T08:00:00"}'
+Invoke-RestMethod `
+  -Method Post `
+  -Uri http://127.0.0.1:8000/predict `
+  -ContentType "application/json" `
+  -Body '{"region":"SILTARA","pm25":78,"pm10":145,"so2":14,"temperature":31,"humidity":62,"wind_speed":2.1,"timestamp":"2026-06-08T08:00:00"}'
 ```
 
-Run the stronger final model in Colab:
+## Colab Final Training
+
+Use [`notebooks/air_pollution_prediction_colab.ipynb`](notebooks/air_pollution_prediction_colab.ipynb) for the full data-heavy run.
+
+Recommended final training command:
 
 ```powershell
 python scripts\train_air_quality_models.py `
@@ -234,109 +350,101 @@ python scripts\train_air_quality_models.py `
   --n-jobs -1
 ```
 
-## Colab Workflow
-
-Use [`notebooks/air_pollution_prediction_colab.ipynb`](notebooks/air_pollution_prediction_colab.ipynb) for the full data-heavy run.
-
-Recommended flow:
+Recommended final workflow:
 
 1. Upload the four raw DCR zip files.
 2. Run dataset preparation.
 3. Train the quarter-hourly model.
-4. Export final plots from `outputs/air_quality_models/plots/`.
-5. Replace website images in `docs/assets/` with the final Colab plots.
+4. Export plots from `outputs/air_quality_models/plots/`.
+5. Replace the images in `docs/assets/`.
+6. Point `AIRSENSE_MODEL_DIR` at `outputs/air_quality_models`.
 
-## Modeling Approach
+## Deployment
 
-Targets:
+This repository includes:
 
-- `pm2_5`
-- `pm10`
-- `so2`
+- `Dockerfile`
+- `render.yaml`
+- `DEPLOYMENT.md`
+- Streamlit app
+- FastAPI app
+- GitHub Pages static website
 
-Feature families:
+Typical deployment surfaces:
 
-- Pollutant and weather measurements
-- Cyclic time encodings
-- Lag features
-- Rolling mean and standard deviation features
-- Region one-hot indicators
-- Missing-value indicators through model imputation
-
-Model strategies:
-
-- `baseline_median`: median baseline for comparison.
-- `multi_output`: one model predicts all three pollutants together.
-- `single_target`: one separate model is trained per pollutant.
-- `best`: inference-time selection of the best strategy per target and region.
-
-Evaluation:
-
-- Chronological train/validation/test split
-- RMSE
-- MAE
-- R2
-- Overall and region-wise metrics
-- Model comparison leaderboard
-- Compact `metrics.json`, `model_comparison.csv`, and `predictions.csv` artifacts on training runs
-
-## Capability Mapping
-
-| ML project capability | AirSense AI evidence |
+| Target | Use |
 |---|---|
-| Data preprocessing | Raw DCR extraction, sheet discovery, timestamp parsing, duplicate handling |
-| Feature engineering | Lag features, rolling statistics, cyclic encodings, region indicators |
-| ML model training | Baseline and Random Forest forecasting for PM2.5, PM10, and SO2 |
-| Evaluation | Chronological split, RMSE, MAE, R2, region-wise metrics |
-| Automation | CLI predictor, report generator, Docker, Render config |
-| Application layer | Streamlit dashboard and FastAPI service |
-| Explainability | Feature-importance summaries and plain-English explanations |
+| GitHub Pages | Static website from `docs/` |
+| Streamlit Community Cloud or local Streamlit | Dashboard |
+| Render | FastAPI service |
+| Docker | Portable app packaging |
+| Colab | Full training workflow |
 
-## Website Preview
+## Project Strengths
 
-The project website presents:
+- Handles messy, real-world environmental monitoring files.
+- Shows end-to-end ML work, not only notebook modeling.
+- Uses chronological evaluation to avoid leakage-heavy claims.
+- Packages inference once and reuses it across dashboard, API, and CLI.
+- Includes clear model documentation, limitations, tests, and deployment files.
+- Presents results through a professional website and dashboard.
 
-- Input form and prediction-result preview
-- Verified dataset statistics
-- Workflow and technology stack
-- Current model plots
-- Explainability, anomaly detection, AI report, and project-details sections
-- Clear project pitch and technical evidence
+## Known Limitations
 
-Open locally:
+- The current bundled local artifact is an hourly runtime model, not the final quarter-hourly high-capacity model.
+- Overall PM2.5 performance is affected by region-specific outliers, especially Bhatagaon.
+- AQI-style categories are project risk labels, not certified regulatory AQI or medical advice.
+- Final public accuracy claims should use the quarter-hourly Colab training run and updated plots.
 
-```text
-docs/index.html
-```
+## Results Good To Present
 
-## Current Status
+These are the strongest honest results from the current validated hourly artifact.
 
-Ready:
+### Dataset Results
 
-- Clean repository structure
-- Dataset preparation pipeline
-- Model training pipeline
-- Portable inference bundle contract
+| Result | Value |
+|---|---:|
+| Total cleaned records | 586,431 |
+| Quarter-hourly records | 467,188 |
+| Hourly records used by current model | 119,243 |
+| Regions processed | 4 |
+| Forecast targets | 3 |
+| Engineered features | 201 |
+| Test rows in current hourly artifact | 15,772 |
+
+### Overall Model Results Worth Presenting
+
+| Target | Best strategy | RMSE | MAE | R2 | Presentation note |
+|---|---|---:|---:|---:|---|
+| PM10 | Single-target | 31.10 | 18.29 | 0.581 | Good overall signal, strong enough to present |
+| SO2 | Single-target | 2.39 | 1.26 | 0.431 | Useful signal, acceptable for project showcase |
+| PM2.5 | Multi-output | 76.62 | 6.94 | 0.044 | Do not present as strong overall accuracy yet |
+
+### Strong Region-Level Results Worth Presenting
+
+| Region | Target | Best R2 | Why it is useful |
+|---|---|---:|---|
+| IGKV | PM2.5 | 0.840 | Very strong clean-region PM2.5 forecasting signal |
+| AIIMS | PM2.5 | 0.819 | Strong PM2.5 performance in medical/residential region |
+| IGKV | PM10 | 0.769 | Strong PM10 forecasting in cleaner baseline region |
+| AIIMS | PM10 | 0.742 | Strong PM10 performance in mixed urban region |
+| SILTARA | PM2.5 | 0.585 | Solid industrial-region PM2.5 signal |
+| AIIMS | SO2 | 0.502 | Good SO2 region-level result |
+
+### Best Way To Present The Project
+
+Present AirSense AI as a strong end-to-end ML engineering project:
+
+- Real-world data ingestion and cleaning
+- Multi-region time-series feature engineering
+- Forecasting model with proper chronological evaluation
+- AQI-style risk interpretation
+- Anomaly detection
+- Explainability
 - Streamlit dashboard
-- FastAPI prediction API
-- CLI prediction smoke test
-- AQI-style risk intelligence
-- Pollution spike alerts
-- Explainability summaries
-- `/metadata` API endpoint
-- Pytest suite
-- Docker and Render deployment config
-- Colab notebook
-- GitHub Pages-ready website
-- Modern README
+- FastAPI endpoint
+- CLI predictor
+- GitHub Pages website
+- Deployment-ready structure
 
-Final polish before public job submission:
-
-- Run the final quarter-hourly model in Colab.
-- Replace website plots with final quarter-hourly result plots.
-- Publish the website through GitHub Pages.
-- Upload or generate the final `inference_bundle.joblib` in the deployment environment.
-
-## Portfolio Pitch
-
-> I built an end-to-end AI system that converts messy multi-region air-quality workbooks into a clean time-series dataset, engineers leakage-safe forecasting features, trains ML models for PM2.5, PM10, and SO2, explains predictions, detects pollution spikes, and serves results through a Streamlit dashboard and FastAPI endpoint.
+For final submission, the project is strong enough as a portfolio and project showcase. For high-accuracy model claims, improve PM2.5 by running the full quarter-hourly training workflow and handling Bhatagaon outliers before presenting final accuracy numbers.
