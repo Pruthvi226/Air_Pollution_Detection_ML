@@ -10,11 +10,12 @@ The processed dataset combines AIIMS, Bhatagaon, IGKV, and SILTARA DCR workbooks
 
 ## Model
 
-The current deployable artifact uses Scikit-learn Random Forest regressors:
+The current deployable artifact uses boosted tree regressors trained on the quarter-hourly dataset:
 
 - `baseline_median`: median baseline used for comparison in generated metrics.
-- `multi_output`: one model predicts all three pollutants together.
-- `single_target`: one model per pollutant.
+- `multi_output_lightgbm` / `single_target_lightgbm`: LightGBM boosted tree candidates.
+- `multi_output_xgboost` / `single_target_xgboost`: XGBoost boosted tree candidates.
+- `multi_output` and `single_target`: inference aliases that point to the best validation-selected boosted candidates.
 - `best`: chooses the lower-RMSE strategy per region and target based on test metrics.
 
 ## Inputs and Outputs
@@ -31,4 +32,4 @@ The AQI layer is a demo-oriented risk interpretation helper. It is not official 
 
 ## Limitations
 
-This is a predictive modeling demo, not a certified environmental compliance or emergency alert system. Prediction quality depends on sensor quality, missing values, station coverage, and whether final quarter-hourly training has been run.
+This is a predictive modeling demo, not a certified environmental compliance or emergency alert system. Prediction quality depends on sensor quality, missing values, station coverage, and spike behavior. The trainer drops spreadsheet-origin timestamp artifacts before 2022-01-01 so invalid dates do not inflate the regular time grid.

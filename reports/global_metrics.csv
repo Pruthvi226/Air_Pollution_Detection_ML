@@ -1,0 +1,4 @@
+target,model_name,rmse,mae,r2,strategy,notes
+PM2.5,LightGBM boosted trees,2.58,0.94,0.978,Global boosted single-target,Best held-out PM2.5 result after quarter-hourly boosted training
+PM10,LightGBM boosted trees,14.87,3.07,0.883,Global boosted single-target,Strong global PM10 improvement over previous Random Forest report
+SO2,LightGBM boosted trees,6.06,0.55,0.245,Global boosted single-target,Low MAE but RMSE remains sensitive to SO2 spikes

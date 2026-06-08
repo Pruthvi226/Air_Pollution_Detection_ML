@@ -1,0 +1,13 @@
+region,target,model_name,rmse,mae,r2,strategy,notes
+AIIMS,PM10,LightGBM boosted trees,8.40,3.33,0.969,Region-aware boosted selector,Strong PM10 forecasting signal
+AIIMS,PM2.5,LightGBM boosted trees,2.64,1.06,0.984,Region-aware boosted selector,Strong PM2.5 forecasting signal
+AIIMS,SO2,XGBoost boosted trees,5.05,0.58,0.361,Region-aware boosted selector,Moderate SO2 signal with spike sensitivity
+BHATAGAON,PM10,LightGBM boosted trees,23.79,3.65,0.739,Region-aware boosted selector,Useful PM10 signal with higher RMSE
+BHATAGAON,PM2.5,LightGBM boosted trees,2.87,0.97,0.965,Region-aware boosted selector,Strong PM2.5 forecasting signal
+BHATAGAON,SO2,LightGBM boosted trees,1.07,0.41,0.836,Region-aware boosted selector,Strong SO2 forecasting signal
+IGKV,PM10,LightGBM boosted trees,5.00,1.93,0.975,Region-aware boosted selector,Strong PM10 forecasting signal
+IGKV,PM2.5,LightGBM boosted trees,2.17,0.78,0.980,Region-aware boosted selector,Strong PM2.5 forecasting signal
+IGKV,SO2,LightGBM boosted trees,9.38,0.64,0.140,Region-aware boosted selector,SO2 RMSE remains spike-sensitive
+SILTARA,PM10,LightGBM boosted trees,13.18,6.27,0.935,Region-aware boosted selector,Strong industrial-region PM10 signal
+SILTARA,PM2.5,LightGBM boosted trees,2.56,1.06,0.941,Region-aware boosted selector,Strong industrial-region PM2.5 signal
+SILTARA,SO2,XGBoost boosted trees,2.12,0.95,0.683,Region-aware boosted selector,Good SO2 signal for Siltara

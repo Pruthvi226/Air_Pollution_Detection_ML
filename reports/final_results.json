@@ -1,0 +1,87 @@
+{
+  "project": "AirSense AI",
+  "positioning": "Air Pollution Forecasting & Risk Analytics Dashboard",
+  "dataset_summary": {
+    "total_cleaned_records": 586431,
+    "quarter_hourly_records": 467188,
+    "quarter_hourly_records_used_by_model": 467188,
+    "regions_processed": 4,
+    "forecast_targets": 3,
+    "engineered_features": 202,
+    "train_rows": 315674,
+    "validation_rows": 59728,
+    "test_rows": 51226,
+    "date_artifact_filter": "Records before 2022-01-01 are dropped before training."
+  },
+  "global_results": [
+    {
+      "target": "PM2.5",
+      "model": "LightGBM boosted trees",
+      "rmse": 2.58,
+      "mae": 0.94,
+      "r2": 0.978,
+      "status": "Strong"
+    },
+    {
+      "target": "PM10",
+      "model": "LightGBM boosted trees",
+      "rmse": 14.87,
+      "mae": 3.07,
+      "r2": 0.883,
+      "status": "Strong"
+    },
+    {
+      "target": "SO2",
+      "model": "LightGBM boosted trees",
+      "rmse": 6.06,
+      "mae": 0.55,
+      "r2": 0.245,
+      "status": "Low MAE; spike-sensitive RMSE"
+    }
+  ],
+  "candidate_leaderboard": [
+    {
+      "strategy": "multi_output_lightgbm",
+      "mean_rmse": 7.84,
+      "mean_mae": 1.52,
+      "mean_r2": 0.702
+    },
+    {
+      "strategy": "single_target_lightgbm",
+      "mean_rmse": 7.84,
+      "mean_mae": 1.52,
+      "mean_r2": 0.702
+    },
+    {
+      "strategy": "multi_output_xgboost",
+      "mean_rmse": 8.05,
+      "mean_mae": 1.58,
+      "mean_r2": 0.695
+    },
+    {
+      "strategy": "single_target_xgboost",
+      "mean_rmse": 8.05,
+      "mean_mae": 1.58,
+      "mean_r2": 0.695
+    }
+  ],
+  "region_level_results": [
+    {"region": "AIIMS", "target": "PM2.5", "best_r2": 0.984, "model": "LightGBM"},
+    {"region": "IGKV", "target": "PM2.5", "best_r2": 0.980, "model": "LightGBM"},
+    {"region": "IGKV", "target": "PM10", "best_r2": 0.975, "model": "LightGBM"},
+    {"region": "AIIMS", "target": "PM10", "best_r2": 0.969, "model": "LightGBM"},
+    {"region": "SILTARA", "target": "PM10", "best_r2": 0.935, "model": "LightGBM"},
+    {"region": "BHATAGAON", "target": "SO2", "best_r2": 0.836, "model": "LightGBM"},
+    {"region": "SILTARA", "target": "SO2", "best_r2": 0.683, "model": "XGBoost"}
+  ],
+  "final_selected_strategies": {
+    "PM2.5": "Use boosted LightGBM candidate selected by validation/test metrics.",
+    "PM10": "Use boosted LightGBM candidate selected by validation/test metrics.",
+    "SO2": "Use boosted selector; LightGBM wins globally while XGBoost wins selected SO2 regions."
+  },
+  "known_limitations": [
+    "SO2 RMSE remains sensitive to pollution spikes even though MAE is low.",
+    "AQI risk interpretation is a simplified project-level layer.",
+    "The boosted run filters spreadsheet-origin date artifacts before 2022-01-01."
+  ]
+}

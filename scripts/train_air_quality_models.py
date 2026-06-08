@@ -17,7 +17,18 @@ from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.pipeline import Pipeline
+
+try:
+    from lightgbm import LGBMRegressor
+except ImportError:  # pragma: no cover - optional training dependency
+    LGBMRegressor = None
+
+try:
+    from xgboost import XGBRegressor
+except ImportError:  # pragma: no cover - optional training dependency
+    XGBRegressor = None
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -62,6 +73,12 @@ GRANULARITY_TO_FREQ = {
 }
 IMPOSSIBLE_VALUE_THRESHOLD = 1_000_000
 MODEL_REGION_COLUMN = "region"
+MODEL_FAMILIES = ("random_forest", "lightgbm", "xgboost")
+MODEL_FAMILY_LABELS = {
+    "random_forest": "Random Forest",
+    "lightgbm": "LightGBM",
+    "xgboost": "XGBoost",
+}
 
 
 def coerce_datetime_series(series: pd.Series) -> pd.Series:
@@ -168,6 +185,16 @@ def parse_args() -> argparse.Namespace:
         help="Inclusive validation end timestamp.",
     )
     parser.add_argument(
+        "--min-date",
+        default="2022-01-01 00:00:00",
+        help="Drop records before this timestamp to guard against spreadsheet-origin date artifacts.",
+    )
+    parser.add_argument(
+        "--max-date",
+        default=None,
+        help="Optional maximum timestamp to keep before model training.",
+    )
+    parser.add_argument(
         "--horizon-steps",
         type=int,
         default=1,
@@ -246,6 +273,46 @@ def parse_args() -> argparse.Namespace:
         default=1,
         help="Parallel workers used by Random Forest. Use -1 in Colab or on an unrestricted machine.",
     )
+    parser.add_argument(
+        "--model-families",
+        nargs="*",
+        choices=MODEL_FAMILIES,
+        default=["random_forest", "lightgbm", "xgboost"],
+        help=(
+            "Model families to compare. LightGBM/XGBoost are skipped automatically "
+            "if the optional package is not installed."
+        ),
+    )
+    parser.add_argument(
+        "--gbm-n-estimators",
+        type=int,
+        default=360,
+        help="Number of boosting rounds for LightGBM and XGBoost candidates.",
+    )
+    parser.add_argument(
+        "--gbm-learning-rate",
+        type=float,
+        default=0.045,
+        help="Learning rate for LightGBM and XGBoost candidates.",
+    )
+    parser.add_argument(
+        "--gbm-max-depth",
+        type=int,
+        default=8,
+        help="Maximum tree depth for LightGBM and XGBoost candidates.",
+    )
+    parser.add_argument(
+        "--gbm-subsample",
+        type=float,
+        default=0.85,
+        help="Row subsample fraction for LightGBM and XGBoost candidates.",
+    )
+    parser.add_argument(
+        "--gbm-colsample",
+        type=float,
+        default=0.85,
+        help="Column subsample fraction for LightGBM and XGBoost candidates.",
+    )
     return parser.parse_args()
 
 
@@ -262,11 +329,20 @@ def ensure_output_dirs(output_dir: Path) -> dict[str, Path]:
     return paths
 
 
-def load_base_dataframe(dataset_path: Path, granularity: str) -> pd.DataFrame:
+def load_base_dataframe(
+    dataset_path: Path,
+    granularity: str,
+    min_date: str | None,
+    max_date: str | None,
+) -> pd.DataFrame:
     df = pd.read_csv(dataset_path, parse_dates=["date_time"], low_memory=False)
     df["date_time"] = coerce_datetime_series(df["date_time"])
     df = df[df["date_time"].notna()].copy()
     df = df[df["granularity"] == granularity].copy()
+    if min_date:
+        df = df[df["date_time"] >= pd.Timestamp(min_date)].copy()
+    if max_date:
+        df = df[df["date_time"] <= pd.Timestamp(max_date)].copy()
     if df.empty:
         raise RuntimeError(f"No rows found for granularity {granularity!r}.")
     df["date_time"] = df["date_time"].dt.round(GRANULARITY_TO_FREQ[granularity])
@@ -441,7 +517,97 @@ def get_feature_columns(model_frame: pd.DataFrame) -> list[str]:
     ]
 
 
+def resolve_model_families(requested_families: Iterable[str]) -> list[str]:
+    selected_families: list[str] = []
+    for family in requested_families or MODEL_FAMILIES:
+        if family in selected_families:
+            continue
+        if family == "lightgbm" and LGBMRegressor is None:
+            print("Skipping LightGBM: optional package lightgbm is not installed.")
+            continue
+        if family == "xgboost" and XGBRegressor is None:
+            print("Skipping XGBoost: optional package xgboost is not installed.")
+            continue
+        selected_families.append(family)
+
+    if not selected_families:
+        raise RuntimeError("No requested model family is available. Install lightgbm/xgboost or enable random_forest.")
+    return selected_families
+
+
+def strategy_name(scope: str, model_family: str) -> str:
+    return f"{scope}_{model_family}"
+
+
+def build_estimator(
+    model_family: str,
+    random_state: int,
+    n_estimators: int,
+    max_depth: int,
+    max_samples: float,
+    n_jobs: int,
+    gbm_n_estimators: int,
+    gbm_learning_rate: float,
+    gbm_max_depth: int,
+    gbm_subsample: float,
+    gbm_colsample: float,
+) -> object:
+    if model_family == "random_forest":
+        return RandomForestRegressor(
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            min_samples_leaf=2,
+            max_features="sqrt",
+            bootstrap=True,
+            max_samples=max_samples,
+            random_state=random_state,
+            n_jobs=n_jobs,
+        )
+
+    if model_family == "lightgbm":
+        if LGBMRegressor is None:
+            raise RuntimeError("LightGBM was requested but lightgbm is not installed.")
+        num_leaves = min(255, max(31, (2**gbm_max_depth) - 1)) if gbm_max_depth > 0 else 63
+        return LGBMRegressor(
+            objective="regression",
+            n_estimators=gbm_n_estimators,
+            learning_rate=gbm_learning_rate,
+            max_depth=gbm_max_depth,
+            num_leaves=num_leaves,
+            min_child_samples=35,
+            subsample=gbm_subsample,
+            subsample_freq=1,
+            colsample_bytree=gbm_colsample,
+            reg_lambda=1.0,
+            random_state=random_state,
+            n_jobs=n_jobs,
+            verbosity=-1,
+        )
+
+    if model_family == "xgboost":
+        if XGBRegressor is None:
+            raise RuntimeError("XGBoost was requested but xgboost is not installed.")
+        return XGBRegressor(
+            objective="reg:squarederror",
+            eval_metric="rmse",
+            n_estimators=gbm_n_estimators,
+            learning_rate=gbm_learning_rate,
+            max_depth=gbm_max_depth,
+            min_child_weight=3,
+            subsample=gbm_subsample,
+            colsample_bytree=gbm_colsample,
+            reg_lambda=1.0,
+            random_state=random_state,
+            n_jobs=n_jobs,
+            tree_method="hist",
+            verbosity=0,
+        )
+
+    raise ValueError(f"Unsupported model family: {model_family}")
+
+
 def build_model_pipeline(
+    model_family: str,
     random_state: int,
     lower_quantile: float | None,
     upper_quantile: float | None,
@@ -449,17 +615,29 @@ def build_model_pipeline(
     max_depth: int,
     max_samples: float,
     n_jobs: int,
+    gbm_n_estimators: int,
+    gbm_learning_rate: float,
+    gbm_max_depth: int,
+    gbm_subsample: float,
+    gbm_colsample: float,
+    multi_output: bool = False,
 ) -> Pipeline:
-    estimator = RandomForestRegressor(
+    estimator = build_estimator(
+        model_family=model_family,
+        random_state=random_state,
         n_estimators=n_estimators,
         max_depth=max_depth,
-        min_samples_leaf=2,
-        max_features="sqrt",
-        bootstrap=True,
         max_samples=max_samples,
-        random_state=random_state,
         n_jobs=n_jobs,
+        gbm_n_estimators=gbm_n_estimators,
+        gbm_learning_rate=gbm_learning_rate,
+        gbm_max_depth=gbm_max_depth,
+        gbm_subsample=gbm_subsample,
+        gbm_colsample=gbm_colsample,
     )
+    if multi_output and model_family != "random_forest":
+        estimator = MultiOutputRegressor(estimator, n_jobs=1)
+
     steps: list[tuple[str, object]] = []
     if lower_quantile is not None and upper_quantile is not None:
         steps.append(
@@ -523,18 +701,18 @@ def evaluate_predictions(
 
 def evaluate_predictions_by_region(
     predictions_df: pd.DataFrame,
-    strategy_prefix: str,
+    strategy: str,
     split_name: str,
 ) -> list[dict[str, float | str]]:
     rows: list[dict[str, float | str]] = []
     for region, region_df in predictions_df.groupby("region", sort=True):
         for target in TARGET_COLUMNS:
             actual_column = f"actual_{target}"
-            predicted_column = f"{strategy_prefix}_{target}"
+            predicted_column = f"{strategy}_pred_{target}"
             rows.append(
                 {
                     "region": region,
-                    "strategy": strategy_prefix.replace("_pred", ""),
+                    "strategy": strategy,
                     "split": split_name,
                     "target": target,
                     "rmse": float(
@@ -758,8 +936,9 @@ def write_summary_report(
             "```",
             "",
             "## Interpretation",
-            "- `multi_output` uses one shared model to predict PM2.5, PM10, and SO2 together.",
-            "- `single_target` uses one separate model per pollutant.",
+            "- `multi_output_*` strategies use one shared model to predict PM2.5, PM10, and SO2 together.",
+            "- `single_target_*` strategies use one separate model per pollutant.",
+            "- The inference bundle aliases `multi_output` and `single_target` to the best validation strategies.",
             "- Lower RMSE and MAE indicate better predictive performance.",
             "- Quarter-hourly data was selected for the final combined model because it provides strong coverage for every region, especially SILTARA.",
         ]
@@ -776,7 +955,12 @@ def main() -> int:
     rolling_windows = sorted(set(args.rolling_windows or DEFAULT_WINDOWS_BY_GRANULARITY[args.granularity]))
 
     print("Loading dataset...")
-    base_df = load_base_dataframe(dataset_path, granularity=args.granularity)
+    base_df = load_base_dataframe(
+        dataset_path,
+        granularity=args.granularity,
+        min_date=args.min_date,
+        max_date=args.max_date,
+    )
     region_coverage_df = summarize_region_coverage(base_df)
     region_coverage_df.to_csv(output_dirs["reports"] / "region_coverage.csv", index=False)
 
@@ -854,39 +1038,20 @@ def main() -> int:
         )
     )
 
-    print("Training multi-output model...")
-    multi_pipeline = build_model_pipeline(
-        random_state=args.random_state,
-        lower_quantile=args.feature_clip_lower,
-        upper_quantile=args.feature_clip_upper,
-        n_estimators=args.n_estimators,
-        max_depth=args.max_depth,
-        max_samples=args.max_samples,
-        n_jobs=args.n_jobs,
-    )
-    multi_pipeline.fit(X_train, y_train_transformed)
+    available_families = resolve_model_families(args.model_families)
+    family_labels = ", ".join(MODEL_FAMILY_LABELS[family] for family in available_families)
+    print(f"Training model families: {family_labels}")
 
-    multi_validation_pred = target_transformer.inverse_transform_frame(
-        pd.DataFrame(
-            multi_pipeline.predict(X_validation),
-            index=X_validation.index,
-            columns=TARGET_COLUMNS,
-        )
-    )
-    multi_test_pred = target_transformer.inverse_transform_frame(
-        pd.DataFrame(
-            multi_pipeline.predict(X_test),
-            index=X_test.index,
-            columns=TARGET_COLUMNS,
-        )
-    )
+    candidate_models: dict[str, object] = {}
+    candidate_scopes: dict[str, str] = {}
+    validation_predictions_by_strategy: dict[str, pd.DataFrame] = {}
+    test_predictions_by_strategy: dict[str, pd.DataFrame] = {}
 
-    print("Training single-target models...")
-    single_pipelines: dict[str, Pipeline] = {}
-    single_validation_pred = pd.DataFrame(index=X_validation.index)
-    single_test_pred = pd.DataFrame(index=X_test.index)
-    for target in TARGET_COLUMNS:
+    for family in available_families:
+        strategy = strategy_name("multi_output", family)
+        print(f"Training {strategy}...")
         pipeline = build_model_pipeline(
+            model_family=family,
             random_state=args.random_state,
             lower_quantile=args.feature_clip_lower,
             upper_quantile=args.feature_clip_upper,
@@ -894,22 +1059,66 @@ def main() -> int:
             max_depth=args.max_depth,
             max_samples=args.max_samples,
             n_jobs=args.n_jobs,
+            gbm_n_estimators=args.gbm_n_estimators,
+            gbm_learning_rate=args.gbm_learning_rate,
+            gbm_max_depth=args.gbm_max_depth,
+            gbm_subsample=args.gbm_subsample,
+            gbm_colsample=args.gbm_colsample,
+            multi_output=True,
         )
-        transformed_target = y_train_transformed[target]
-        pipeline.fit(X_train, transformed_target)
-        single_pipelines[target] = pipeline
-        single_validation_pred[target] = target_transformer.inverse_transform_frame(
-            pd.DataFrame({target: pipeline.predict(X_validation)}, index=X_validation.index)
-        )[target]
-        single_test_pred[target] = target_transformer.inverse_transform_frame(
-            pd.DataFrame({target: pipeline.predict(X_test)}, index=X_test.index)
-        )[target]
+        pipeline.fit(X_train, y_train_transformed)
+        candidate_models[strategy] = pipeline
+        candidate_scopes[strategy] = "multi_output"
+        validation_predictions_by_strategy[strategy] = target_transformer.inverse_transform_frame(
+            pd.DataFrame(
+                pipeline.predict(X_validation),
+                index=X_validation.index,
+                columns=TARGET_COLUMNS,
+            )
+        )
+        test_predictions_by_strategy[strategy] = target_transformer.inverse_transform_frame(
+            pd.DataFrame(
+                pipeline.predict(X_test),
+                index=X_test.index,
+                columns=TARGET_COLUMNS,
+            )
+        )
 
-    print("Saving models...")
-    joblib.dump(multi_pipeline, output_dirs["models"] / "multi_output_rf.joblib")
-    for target, pipeline in single_pipelines.items():
-        joblib.dump(pipeline, output_dirs["models"] / f"single_target_{target}_rf.joblib")
-    joblib.dump(target_transformer, output_dirs["models"] / "target_transformer.joblib")
+    for family in available_families:
+        strategy = strategy_name("single_target", family)
+        print(f"Training {strategy}...")
+        target_pipelines: dict[str, Pipeline] = {}
+        validation_pred = pd.DataFrame(index=X_validation.index)
+        test_pred = pd.DataFrame(index=X_test.index)
+        for target in TARGET_COLUMNS:
+            pipeline = build_model_pipeline(
+                model_family=family,
+                random_state=args.random_state,
+                lower_quantile=args.feature_clip_lower,
+                upper_quantile=args.feature_clip_upper,
+                n_estimators=args.n_estimators,
+                max_depth=args.max_depth,
+                max_samples=args.max_samples,
+                n_jobs=args.n_jobs,
+                gbm_n_estimators=args.gbm_n_estimators,
+                gbm_learning_rate=args.gbm_learning_rate,
+                gbm_max_depth=args.gbm_max_depth,
+                gbm_subsample=args.gbm_subsample,
+                gbm_colsample=args.gbm_colsample,
+            )
+            transformed_target = y_train_transformed[target]
+            pipeline.fit(X_train, transformed_target)
+            target_pipelines[target] = pipeline
+            validation_pred[target] = target_transformer.inverse_transform_frame(
+                pd.DataFrame({target: pipeline.predict(X_validation)}, index=X_validation.index)
+            )[target]
+            test_pred[target] = target_transformer.inverse_transform_frame(
+                pd.DataFrame({target: pipeline.predict(X_test)}, index=X_test.index)
+            )[target]
+        candidate_models[strategy] = target_pipelines
+        candidate_scopes[strategy] = "single_target"
+        validation_predictions_by_strategy[strategy] = validation_pred
+        test_predictions_by_strategy[strategy] = test_pred
 
     print("Calculating metrics...")
     overall_metrics_rows: list[dict[str, float | str]] = []
@@ -919,44 +1128,110 @@ def main() -> int:
     overall_metrics_rows.extend(
         evaluate_predictions(y_test, baseline_test_pred, "baseline_median", "test")
     )
-    overall_metrics_rows.extend(
-        evaluate_predictions(y_validation, multi_validation_pred, "multi_output", "validation")
-    )
-    overall_metrics_rows.extend(evaluate_predictions(y_test, multi_test_pred, "multi_output", "test"))
-    overall_metrics_rows.extend(
-        evaluate_predictions(y_validation, single_validation_pred, "single_target", "validation")
-    )
-    overall_metrics_rows.extend(
-        evaluate_predictions(y_test, single_test_pred, "single_target", "test")
-    )
+    for strategy in validation_predictions_by_strategy:
+        overall_metrics_rows.extend(
+            evaluate_predictions(
+                y_validation,
+                validation_predictions_by_strategy[strategy],
+                strategy,
+                "validation",
+            )
+        )
+        overall_metrics_rows.extend(
+            evaluate_predictions(
+                y_test,
+                test_predictions_by_strategy[strategy],
+                strategy,
+                "test",
+            )
+        )
     overall_metrics_df = pd.DataFrame(overall_metrics_rows).sort_values(
         ["split", "target", "strategy"], kind="stable"
     )
     overall_metrics_df.to_csv(output_dirs["reports"] / "metrics_overall.csv", index=False)
 
+    validation_metrics_df = overall_metrics_df[
+        (overall_metrics_df["split"] == "validation")
+        & (overall_metrics_df["strategy"].isin(validation_predictions_by_strategy))
+    ].copy()
+    validation_leaderboard_df = (
+        validation_metrics_df.groupby("strategy", as_index=False)
+        .agg(mean_rmse=("rmse", "mean"), mean_mae=("mae", "mean"), mean_r2=("r2", "mean"))
+        .sort_values(["mean_rmse", "mean_mae"], kind="stable")
+    )
+    validation_leaderboard_df.to_csv(output_dirs["reports"] / "validation_leaderboard.csv", index=False)
+
+    multi_strategies = [
+        strategy for strategy, scope in candidate_scopes.items() if scope == "multi_output"
+    ]
+    single_strategies = [
+        strategy for strategy, scope in candidate_scopes.items() if scope == "single_target"
+    ]
+    best_multi_strategy = (
+        validation_leaderboard_df[validation_leaderboard_df["strategy"].isin(multi_strategies)]
+        .sort_values(["mean_rmse", "mean_mae"], kind="stable")
+        .iloc[0]["strategy"]
+    )
+    single_validation_metrics_df = validation_metrics_df[
+        validation_metrics_df["strategy"].isin(single_strategies)
+    ]
+    best_single_strategy_by_target = (
+        single_validation_metrics_df.sort_values(["target", "rmse", "mae"], kind="stable")
+        .groupby("target", as_index=False)
+        .first()[["target", "strategy"]]
+        .set_index("target")["strategy"]
+        .to_dict()
+    )
+    multi_pipeline = candidate_models[str(best_multi_strategy)]
+    multi_validation_pred = validation_predictions_by_strategy[str(best_multi_strategy)]
+    multi_test_pred = test_predictions_by_strategy[str(best_multi_strategy)]
+    single_pipelines = {
+        target: candidate_models[str(strategy)][target]
+        for target, strategy in best_single_strategy_by_target.items()
+    }
+    single_validation_pred = pd.DataFrame(index=X_validation.index)
+    single_test_pred = pd.DataFrame(index=X_test.index)
+    for target, strategy in best_single_strategy_by_target.items():
+        single_validation_pred[target] = validation_predictions_by_strategy[str(strategy)][target]
+        single_test_pred[target] = test_predictions_by_strategy[str(strategy)][target]
+
     predictions_validation = model_frame.loc[masks["validation"], ["date_time", "region"]].copy()
     predictions_test = model_frame.loc[masks["test"], ["date_time", "region"]].copy()
-    for predictions_df, actual_frame, multi_frame, single_frame in [
-        (predictions_validation, y_validation, multi_validation_pred, single_validation_pred),
-        (predictions_test, y_test, multi_test_pred, single_test_pred),
+    for predictions_df, actual_frame, strategy_predictions, multi_frame, single_frame in [
+        (
+            predictions_validation,
+            y_validation,
+            validation_predictions_by_strategy,
+            multi_validation_pred,
+            single_validation_pred,
+        ),
+        (
+            predictions_test,
+            y_test,
+            test_predictions_by_strategy,
+            multi_test_pred,
+            single_test_pred,
+        ),
     ]:
         for target in TARGET_COLUMNS:
             predictions_df[f"actual_{target}"] = actual_frame[target].values
             predictions_df[f"multi_pred_{target}"] = multi_frame[target].values
             predictions_df[f"single_pred_{target}"] = single_frame[target].values
+        for strategy, strategy_frame in strategy_predictions.items():
+            for target in TARGET_COLUMNS:
+                predictions_df[f"{strategy}_pred_{target}"] = strategy_frame[target].values
 
     predictions_validation.to_csv(output_dirs["predictions"] / "validation_predictions.csv", index=False)
     predictions_test.to_csv(output_dirs["predictions"] / "test_predictions.csv", index=False)
 
     metrics_by_region_rows: list[dict[str, float | str]] = []
-    metrics_by_region_rows.extend(
-        evaluate_predictions_by_region(predictions_validation, "multi_pred", "validation")
-    )
-    metrics_by_region_rows.extend(evaluate_predictions_by_region(predictions_test, "multi_pred", "test"))
-    metrics_by_region_rows.extend(
-        evaluate_predictions_by_region(predictions_validation, "single_pred", "validation")
-    )
-    metrics_by_region_rows.extend(evaluate_predictions_by_region(predictions_test, "single_pred", "test"))
+    for strategy in validation_predictions_by_strategy:
+        metrics_by_region_rows.extend(
+            evaluate_predictions_by_region(predictions_validation, strategy, "validation")
+        )
+        metrics_by_region_rows.extend(
+            evaluate_predictions_by_region(predictions_test, strategy, "test")
+        )
     metrics_by_region_df = pd.DataFrame(metrics_by_region_rows).sort_values(
         ["split", "region", "target", "strategy"], kind="stable"
     )
@@ -987,12 +1262,21 @@ def main() -> int:
         "targets": TARGET_COLUMNS,
         "model_comparison": model_comparison_df.to_dict(orient="records"),
         "test_metrics": test_metrics_df.to_dict(orient="records"),
+        "validation_leaderboard": validation_leaderboard_df.to_dict(orient="records"),
         "best_strategy_by_region_target": best_strategy_df.to_dict(orient="records"),
+        "best_multi_output_strategy": str(best_multi_strategy),
+        "best_single_target_strategy_by_target": best_single_strategy_by_target,
     }
     (output_dirs["root"] / "metrics.json").write_text(
         json.dumps(metrics_payload, indent=2),
         encoding="utf-8",
     )
+
+    print("Saving models...")
+    joblib.dump(multi_pipeline, output_dirs["models"] / "multi_output.joblib")
+    for target, pipeline in single_pipelines.items():
+        joblib.dump(pipeline, output_dirs["models"] / f"single_target_{target}.joblib")
+    joblib.dump(target_transformer, output_dirs["models"] / "target_transformer.joblib")
 
     print("Generating plots...")
     sns.set_theme(style="whitegrid")
@@ -1042,6 +1326,8 @@ def main() -> int:
         "feature_count": len(feature_columns),
         "features": feature_columns,
         "split_counts": split_counts,
+        "min_date": args.min_date,
+        "max_date": args.max_date,
         "train_end": args.train_end,
         "validation_end": args.validation_end,
         "horizon_steps": args.horizon_steps,
@@ -1051,9 +1337,18 @@ def main() -> int:
         "feature_clip_upper": args.feature_clip_upper,
         "target_clip_upper": args.target_clip_upper,
         "log_target_transform": not args.disable_log_target_transform,
+        "model_families": available_families,
+        "candidate_scopes": candidate_scopes,
+        "best_multi_output_strategy": str(best_multi_strategy),
+        "best_single_target_strategy_by_target": best_single_strategy_by_target,
         "n_estimators": args.n_estimators,
         "max_depth": args.max_depth,
         "max_samples": args.max_samples,
+        "gbm_n_estimators": args.gbm_n_estimators,
+        "gbm_learning_rate": args.gbm_learning_rate,
+        "gbm_max_depth": args.gbm_max_depth,
+        "gbm_subsample": args.gbm_subsample,
+        "gbm_colsample": args.gbm_colsample,
         "n_jobs": args.n_jobs,
         "regions": sorted(base_df["region"].unique().tolist()),
     }
@@ -1066,6 +1361,7 @@ def main() -> int:
         "models": {
             "multi_output": multi_pipeline,
             "single_target": single_pipelines,
+            "candidates": candidate_models,
         },
         "target_transformer": target_transformer,
         "feature_columns": feature_columns,
@@ -1082,7 +1378,7 @@ def main() -> int:
             "optional": ["date_time", "temp", "hum", "ws", "wd", "benz", "co", "nh3", "no", "no2", "nox", "o3", "rg", "sr"],
         },
         "outputs": TARGET_COLUMNS,
-        "strategies": ["best", "multi_output", "single_target"],
+        "strategies": ["best", "multi_output", "single_target", *candidate_models.keys()],
         "feature_count": len(feature_columns),
         "regions": metadata["regions"],
     }

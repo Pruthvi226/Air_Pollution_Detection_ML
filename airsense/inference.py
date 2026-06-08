@@ -4,6 +4,7 @@ import json
 import math
 import os
 import re
+import warnings
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -272,12 +273,18 @@ def _inverse_predictions(bundle: Mapping[str, Any], predictions: pd.DataFrame) -
     return restored.clip(lower=0)
 
 
+def _model_predict(model: Any, feature_frame: pd.DataFrame) -> Any:
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="X does not have valid feature names.*")
+        return model.predict(feature_frame)
+
+
 def _predict_multi_output(bundle: Mapping[str, Any], feature_frame: pd.DataFrame) -> pd.DataFrame:
     target_columns = list(bundle.get("target_columns", TARGET_COLUMNS))
     model = bundle["models"].get("multi_output")
     if model is None:
         raise ModelNotReadyError("The inference bundle does not contain a multi-output model.")
-    predictions = pd.DataFrame(model.predict(feature_frame), columns=target_columns)
+    predictions = pd.DataFrame(_model_predict(model, feature_frame), columns=target_columns)
     return _inverse_predictions(bundle, predictions)
 
 
@@ -289,19 +296,71 @@ def _predict_single_target(bundle: Mapping[str, Any], feature_frame: pd.DataFram
         raise ModelNotReadyError(f"The inference bundle is missing single-target models for: {missing}")
 
     raw_predictions = {
-        target: models[target].predict(feature_frame)
+        target: _model_predict(models[target], feature_frame)
         for target in target_columns
     }
     predictions = pd.DataFrame(raw_predictions, columns=target_columns)
     return _inverse_predictions(bundle, predictions)
 
 
+def _strategy_scope(bundle: Mapping[str, Any], strategy: str) -> str | None:
+    metadata = bundle.get("metadata", {})
+    candidate_scopes = metadata.get("candidate_scopes", {})
+    if strategy in candidate_scopes:
+        return str(candidate_scopes[strategy])
+    if strategy.startswith("multi_output_"):
+        return "multi_output"
+    if strategy.startswith("single_target_"):
+        return "single_target"
+    return None
+
+
+def _predict_named_strategy(
+    bundle: Mapping[str, Any],
+    feature_frame: pd.DataFrame,
+    strategy: str,
+) -> pd.DataFrame:
+    if strategy == "multi_output":
+        return _predict_multi_output(bundle, feature_frame)
+    if strategy == "single_target":
+        return _predict_single_target(bundle, feature_frame)
+
+    candidates = bundle["models"].get("candidates") or {}
+    if strategy not in candidates:
+        raise ValueError("strategy must be one of: best, multi_output, single_target")
+
+    target_columns = list(bundle.get("target_columns", TARGET_COLUMNS))
+    scope = _strategy_scope(bundle, strategy)
+    model = candidates[strategy]
+    if scope == "multi_output":
+        predictions = pd.DataFrame(_model_predict(model, feature_frame), columns=target_columns)
+        return _inverse_predictions(bundle, predictions)
+    if scope == "single_target":
+        missing = [target for target in target_columns if target not in model]
+        if missing:
+            raise ModelNotReadyError(f"The inference bundle is missing {strategy} models for: {missing}")
+        raw_predictions = {
+            target: _model_predict(model[target], feature_frame)
+            for target in target_columns
+        }
+        predictions = pd.DataFrame(raw_predictions, columns=target_columns)
+        return _inverse_predictions(bundle, predictions)
+
+    raise ValueError("strategy must be one of: best, multi_output, single_target")
+
+
 def _best_strategy(bundle: Mapping[str, Any], region: str, target: str) -> str:
     rows = bundle.get("best_strategy_by_region_target") or []
+    candidates = bundle.get("models", {}).get("candidates") or {}
     for row in rows:
         if row.get("region") == region and row.get("target") == target:
             strategy = str(row.get("strategy", "multi")).lower()
-            return "single_target" if strategy.startswith("single") else "multi_output"
+            if strategy in candidates:
+                return strategy
+            if strategy.startswith("single"):
+                return "single_target"
+            if strategy.startswith("multi"):
+                return "multi_output"
     return "multi_output"
 
 
@@ -319,6 +378,7 @@ def classify_risk(predictions: Mapping[str, float]) -> dict[str, Any]:
 
 def build_metadata(bundle: Mapping[str, Any]) -> dict[str, Any]:
     metadata = dict(bundle.get("metadata", {}))
+    candidate_strategies = sorted((bundle.get("models", {}).get("candidates") or {}).keys())
     return {
         "project": "AirSense AI",
         "version": PROJECT_VERSION,
@@ -329,7 +389,7 @@ def build_metadata(bundle: Mapping[str, Any]) -> dict[str, Any]:
         "trained_at": metadata.get("trained_at", "generated smoke artifact"),
         "granularity": metadata.get("granularity", "unknown"),
         "model_dir": bundle.get("model_dir"),
-        "strategies": ["best", "multi_output", "single_target"],
+        "strategies": ["best", "multi_output", "single_target", *candidate_strategies],
     }
 
 
@@ -349,20 +409,24 @@ def predict(
     )
     normalized_strategy = strategy.lower().strip()
 
-    if normalized_strategy == "multi_output":
-        prediction_frame = _predict_multi_output(bundle, feature_frame)
-    elif normalized_strategy == "single_target":
-        prediction_frame = _predict_single_target(bundle, feature_frame)
+    candidate_strategies = set((bundle.get("models", {}).get("candidates") or {}).keys())
+    if normalized_strategy in {"multi_output", "single_target"} or normalized_strategy in candidate_strategies:
+        prediction_frame = _predict_named_strategy(bundle, feature_frame, normalized_strategy)
     elif normalized_strategy == "best":
-        multi_frame = _predict_multi_output(bundle, feature_frame)
-        single_frame = _predict_single_target(bundle, feature_frame)
-        prediction_frame = multi_frame.copy()
+        strategy_predictions: dict[str, pd.DataFrame] = {}
+        prediction_frame = pd.DataFrame(index=[0], columns=bundle.get("target_columns", TARGET_COLUMNS))
         for target in bundle.get("target_columns", TARGET_COLUMNS):
             selected_strategy = _best_strategy(bundle, normalized_region, target)
-            if selected_strategy == "single_target":
-                prediction_frame[target] = single_frame[target]
+            if selected_strategy not in strategy_predictions:
+                strategy_predictions[selected_strategy] = _predict_named_strategy(
+                    bundle,
+                    feature_frame,
+                    selected_strategy,
+                )
+            prediction_frame[target] = strategy_predictions[selected_strategy][target]
     else:
-        raise ValueError("strategy must be one of: best, multi_output, single_target")
+        allowed = ["best", "multi_output", "single_target", *sorted(candidate_strategies)]
+        raise ValueError(f"strategy must be one of: {', '.join(allowed)}")
 
     predictions = {
         target: round(float(max(prediction_frame.iloc[0][target], 0.0)), 3)

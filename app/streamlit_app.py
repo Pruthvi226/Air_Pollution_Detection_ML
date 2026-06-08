@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from datetime import datetime, time
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -14,9 +14,25 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from airsense.config import PROJECT_VERSION, SUPPORTED_REGIONS, TARGET_COLUMNS
 from airsense.anomaly import detect_prediction_spikes
-from airsense.aqi import classify_aqi_risk
 from airsense.explainability import get_feature_importance
 from airsense.inference import ModelNotReadyError, load_model_bundle, predict
+from src.anomaly_detection import detect_pollution_spike
+from src.aqi_utils import classify_aqi_risk
+from src.config import (
+    DATASET_METRICS,
+    DEFAULT_SCENARIO,
+    DEMO_SCENARIO,
+    GLOBAL_PERFORMANCE,
+    INTERPRETATION_CARDS,
+    PIPELINE_STEPS,
+    POLLUTANT_LABELS,
+    PREDICTION_STATE_KEYS,
+    REGION_ANALYTICS,
+    REGION_PERFORMANCE,
+)
+from src.predict import select_best_model
+from src.report_generator import generate_air_quality_report
+from src.visualization_utils import make_bar_chart
 
 try:
     from airsense.inference import build_metadata
@@ -37,176 +53,6 @@ except ImportError:
 
 
 st.set_page_config(page_title="AirSense AI", layout="wide")
-
-
-DEMO_SCENARIO = {
-    "region": "SILTARA",
-    "strategy": "best",
-    "date": datetime(2026, 6, 8).date(),
-    "time": time(9, 0),
-    "hour": 9,
-    "month": 6,
-    "readings": {
-        "pm2_5": 78.0,
-        "pm10": 145.0,
-        "so2": 14.0,
-        "temp": 31.0,
-        "hum": 62.0,
-        "ws": 3.2,
-        "wd": 210.0,
-    },
-}
-
-DEFAULT_SCENARIO = {
-    "region": "SILTARA",
-    "strategy": "best",
-    "date": datetime.now().date(),
-    "time": time(datetime.now().hour, 0),
-    "hour": datetime.now().hour,
-    "month": datetime.now().month,
-    "readings": {
-        "pm2_5": 38.0,
-        "pm10": 112.0,
-        "so2": 18.0,
-        "temp": 31.0,
-        "hum": 58.0,
-        "ws": 3.2,
-        "wd": 180.0,
-    },
-}
-
-PREDICTION_STATE_KEYS = {
-    "region": "prediction_region",
-    "strategy": "prediction_strategy",
-    "date": "prediction_date",
-    "time": "prediction_time",
-    "hour": "prediction_hour",
-    "month": "prediction_month",
-    "pm2_5": "prediction_pm25",
-    "pm10": "prediction_pm10",
-    "so2": "prediction_so2",
-    "temp": "prediction_temp",
-    "hum": "prediction_hum",
-    "ws": "prediction_ws",
-    "wd": "prediction_wd",
-}
-
-POLLUTANT_LABELS = {
-    "pm2_5": "PM2.5",
-    "pm10": "PM10",
-    "so2": "SO2",
-}
-
-DATASET_METRICS = [
-    {"Metric": "Total cleaned records", "Value": "586,431", "Interpretation": "Large processed dataset after cleaning"},
-    {"Metric": "Quarter-hourly records", "Value": "467,188", "Interpretation": "High-resolution raw monitoring data"},
-    {"Metric": "Hourly records used by model", "Value": "119,243", "Interpretation": "Aggregated time-series modeling data"},
-    {"Metric": "Regions processed", "Value": "4", "Interpretation": "AIIMS, Bhatagaon, IGKV, Siltara"},
-    {"Metric": "Forecast targets", "Value": "3", "Interpretation": "PM2.5, PM10, SO2"},
-    {"Metric": "Engineered features", "Value": "201", "Interpretation": "Lag, rolling, time, and region features"},
-    {"Metric": "Test rows", "Value": "15,772", "Interpretation": "Final evaluation sample size"},
-]
-
-GLOBAL_PERFORMANCE = [
-    {
-        "Target": "PM10",
-        "Best Strategy": "Single-target",
-        "RMSE": 31.10,
-        "MAE": 18.29,
-        "R2": 0.581,
-        "Status": "Good baseline",
-        "Interpretation": "Stable global forecasting performance",
-    },
-    {
-        "Target": "SO2",
-        "Best Strategy": "Single-target",
-        "RMSE": 2.39,
-        "MAE": 1.26,
-        "R2": 0.431,
-        "Status": "Moderate",
-        "Interpretation": "Reasonable global signal with scope for richer features",
-    },
-    {
-        "Target": "PM2.5",
-        "Best Strategy": "Multi-output",
-        "RMSE": 76.62,
-        "MAE": 6.94,
-        "R2": 0.044,
-        "Status": "Region-specific modeling required",
-        "Interpretation": "Global model under-captures local PM2.5 behavior",
-    },
-]
-
-REGION_PERFORMANCE = [
-    {"Region": "IGKV", "Target": "PM2.5", "Best R2": 0.840, "Performance Level": "Strong", "Notes": "Clean region-level PM2.5 forecasting signal"},
-    {"Region": "AIIMS", "Target": "PM2.5", "Best R2": 0.819, "Performance Level": "Strong", "Notes": "Medical/residential PM2.5 forecasting signal"},
-    {"Region": "IGKV", "Target": "PM10", "Best R2": 0.769, "Performance Level": "Good", "Notes": "Cleaner baseline PM10 behavior"},
-    {"Region": "AIIMS", "Target": "PM10", "Best R2": 0.742, "Performance Level": "Good", "Notes": "Mixed urban PM10 behavior"},
-    {"Region": "SILTARA", "Target": "PM2.5", "Best R2": 0.585, "Performance Level": "Good baseline", "Notes": "Industrial-region PM2.5 behavior"},
-    {"Region": "AIIMS", "Target": "SO2", "Best R2": 0.502, "Performance Level": "Moderate", "Notes": "Region-level SO2 behavior"},
-]
-
-REGION_ANALYTICS = [
-    {
-        "Region": "AIIMS",
-        "Best target": "PM2.5",
-        "Best R2": 0.819,
-        "Pollution behavior": "Medical/residential region with strong PM2.5 and PM10 forecasting signals.",
-        "Suggested model strategy": "Region-specific PM2.5 and PM10 models",
-    },
-    {
-        "Region": "Bhatagaon",
-        "Best target": "PM10",
-        "Best R2": 0.364,
-        "Pollution behavior": "Urban traffic/settlement region; needs additional feature analysis where performance is lower.",
-        "Suggested model strategy": "Feature enrichment and residual analysis",
-    },
-    {
-        "Region": "IGKV",
-        "Best target": "PM2.5",
-        "Best R2": 0.840,
-        "Pollution behavior": "Clean region-level forecasting signal with the best PM2.5 performance.",
-        "Suggested model strategy": "Region-specific single-target PM2.5 model",
-    },
-    {
-        "Region": "Siltara",
-        "Best target": "PM2.5",
-        "Best R2": 0.585,
-        "Pollution behavior": "Industrial-region behavior where PM2.5 forecasting is useful but more complex.",
-        "Suggested model strategy": "Region-specific PM2.5 model with industrial features",
-    },
-]
-
-INTERPRETATION_CARDS = [
-    {
-        "Title": "PM10 Global Forecasting",
-        "Status": "Good baseline",
-        "R2": "0.581",
-        "Explanation": "PM10 shows the strongest global model performance. The engineered features capture a meaningful portion of PM10 variation across regions.",
-    },
-    {
-        "Title": "SO2 Global Forecasting",
-        "Status": "Moderate",
-        "R2": "0.431",
-        "Explanation": "SO2 is more difficult to forecast globally but still shows usable predictive signal. More industrial, meteorological, or emission-source features may improve it.",
-    },
-    {
-        "Title": "PM2.5 Global Forecasting",
-        "Status": "Needs region-specific modeling",
-        "R2": "0.044",
-        "Explanation": "PM2.5 patterns are highly region-dependent. Region-level PM2.5 modeling improves performance significantly.",
-    },
-]
-
-PIPELINE_STEPS = [
-    "Raw Pollution Data",
-    "Data Cleaning",
-    "Feature Engineering",
-    "ML Model Training",
-    "Model Evaluation",
-    "AQI Risk Engine",
-    "Dashboard Insights",
-]
 
 
 @st.cache_resource(show_spinner=False)
@@ -294,7 +140,17 @@ def render_status_table(frame: pd.DataFrame, status_column: str = "Status") -> N
 
 
 def render_bar_chart(frame: pd.DataFrame, x: str, y: str) -> None:
-    st.bar_chart(frame[[x, y]], x=x, y=y, use_container_width=True)
+    chart = make_bar_chart(frame[[x, y]], x=x, y=y)
+    if chart is not None:
+        chart.update_layout(
+            template="plotly_dark",
+            margin=dict(l=10, r=10, t=20, b=10),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+        st.plotly_chart(chart, use_container_width=True)
+    else:
+        st.bar_chart(frame[[x, y]], x=x, y=y, use_container_width=True)
 
 
 def render_result_images(bundle: dict) -> None:
@@ -457,6 +313,7 @@ def prediction_form(bundle: dict) -> tuple[dict, dict]:
 def render_prediction_result(result: dict) -> None:
     predictions = result["predictions"]
     risk = classify_aqi_risk(predictions["pm2_5"], predictions["pm10"], predictions["so2"])
+    selected_strategy = select_best_model(result["region"], "PM2.5")
     alerts = build_anomaly_events(result, {
         "pm2_5": predictions["pm2_5"],
         "pm10": predictions["pm10"],
@@ -468,6 +325,17 @@ def render_prediction_result(result: dict) -> None:
     cols[2].metric("SO2", f"{predictions['so2']:.1f} ug/m3")
     cols[3].metric("AQI Risk", risk["category"])
     cols[4].metric("Spike Alert", "Yes" if alerts else "No")
+
+    st.markdown(
+        f"""
+        <div class="glass-card">
+          <div class="card-kicker">Model Strategy Used</div>
+          <div class="card-title">{selected_strategy['strategy']}</div>
+          <div class="card-body">{selected_strategy['reason']}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown(
         f"""
@@ -489,7 +357,7 @@ def render_prediction_result(result: dict) -> None:
             "prediction": [predictions["pm2_5"], predictions["pm10"], predictions["so2"]],
         }
     )
-    st.bar_chart(chart_frame, x="pollutant", y="prediction", use_container_width=True)
+    render_bar_chart(chart_frame, "pollutant", "prediction")
 
 
 def build_anomaly_events(result: dict, readings: dict) -> list[dict]:
@@ -532,22 +400,28 @@ def render_anomaly_events(result: dict, readings: dict) -> None:
 def build_ai_report(result: dict, readings: dict, metadata: dict) -> str:
     predictions = result["predictions"]
     risk = classify_aqi_risk(predictions["pm2_5"], predictions["pm10"], predictions["so2"])
-    alerts = build_anomaly_events(result, readings)
-    alert_summary = "no active spike alert" if not alerts else "abnormal PM10/PM2.5 behavior compared to configured review thresholds"
+    anomaly_result = detect_pollution_spike(
+        current_value=readings.get("pm10", predictions["pm10"]),
+        rolling_mean=80.0,
+        rolling_std=20.0,
+        pollutant="PM10",
+    )
     top_features = result.get("explanation", {}).get("top_features", [])
     feature_names = [str(row.get("feature", "")) for row in top_features[:3] if row.get("feature")]
     if not feature_names:
         feature_names = ["recent PM10 history", "rolling pollution averages", "region-specific trends"]
-    feature_summary = ", ".join(feature_names)
-    region_name = str(result["region"]).title()
+    selected_strategy = select_best_model(result["region"], "PM2.5")
+    report_body = generate_air_quality_report(
+        region=result["region"],
+        predictions=predictions,
+        aqi_result=risk,
+        anomaly_result=anomaly_result,
+        top_features=feature_names,
+        model_strategy=selected_strategy,
+    )
     return (
         "AI-Generated Air Quality Summary\n\n"
-        "This report is generated using a rule-based NLP-style summarization template.\n\n"
-        f"Today's forecast for {region_name} indicates PM2.5 at {predictions['pm2_5']:.1f} ug/m3, "
-        f"PM10 at {predictions['pm10']:.1f} ug/m3, and SO2 at {predictions['so2']:.1f} ug/m3. "
-        f"The simplified AQI risk category is {risk['category']} with {risk['risk_level'].lower()} risk. "
-        f"The model explanation highlights {feature_summary} as important contributors to the forecast. "
-        f"The spike detection module reports {alert_summary}. {risk['message']}\n\n"
+        f"{report_body}\n\n"
         f"Runtime artifact: {Path(str(metadata['model_dir'])).name}\n"
         "Future scope: this template can be upgraded with an LLM-based report summarizer."
     )
@@ -848,9 +722,8 @@ def main() -> None:
         global_frame = global_performance_frame()
         render_status_table(global_frame)
         st.markdown(
-            "The global model performs best for PM10 forecasting with R2 = 0.581. SO2 shows moderate global performance with R2 = 0.431. "
-            "PM2.5 performs weakly in the global multi-output setting because PM2.5 concentration patterns vary significantly across regions. "
-            "Therefore, region-specific evaluation was added to better capture local pollution behavior."
+            "The boosted LightGBM run is now strongest for PM2.5 and PM10, with held-out R2 values of 0.978 and 0.883 respectively. "
+            "SO2 has low MAE but remains spike-sensitive, so the system keeps region/target strategy selection and flags SO2 residual risk."
         )
         st.subheader("Global Model R2 Comparison")
         render_bar_chart(global_frame[["Target", "R2"]], "Target", "R2")
@@ -869,7 +742,7 @@ def main() -> None:
 
     elif page == "Region Performance":
         st.subheader("Region-Specific Model Performance")
-        st.success("Best Result: IGKV PM2.5 achieved R2 = 0.840")
+        st.success("Best Result: AIIMS PM2.5 achieved R2 = 0.984 with the boosted selector")
         region_frame = region_performance_frame()
         st.dataframe(region_frame, use_container_width=True, hide_index=True)
         leaderboard = region_frame.copy()
@@ -877,11 +750,11 @@ def main() -> None:
         st.subheader("Best Region-Level Forecasting Results")
         render_bar_chart(leaderboard[["Region + Target", "Best R2"]], "Region + Target", "Best R2")
         st.info(
-            "Region-level results are much stronger than the global PM2.5 result. This shows that air pollution forecasting should not always rely on one global model. "
-            "Localized models can better capture region-specific emission patterns, weather behavior, and pollution trends."
+            "Region-level results confirm that boosted lag and rolling features capture short-term local pollutant behavior strongly. "
+            "The selector still compares region and target behavior so SO2 spike sensitivity is not hidden."
         )
         st.info(
-            "For the final system, the recommended strategy is to use single-target and region-specific models for PM2.5 and PM10 instead of depending only on one global multi-output model."
+            "For the final system, the recommended strategy is the boosted LightGBM/XGBoost selector with SO2 residual monitoring."
         )
 
     elif page == "Region Analytics":
@@ -929,23 +802,50 @@ def main() -> None:
     elif page == "Anomaly Detection":
         st.subheader("Pollution Spike Detection")
         active_result, active_readings = scenario_prediction(bundle)
+        st.markdown("Current demo scenario alert review")
         render_anomaly_events(active_result, active_readings)
-        spike_ratio = active_readings["pm10"] / 80.0
+
+        st.subheader("Trend-Based Spike Check")
+        controls = st.columns(4)
+        anomaly_region = controls[0].selectbox("Region", ["AIIMS", "BHATAGAON", "IGKV", "SILTARA"], index=3)
+        pollutant_label = controls[1].selectbox("Pollutant", ["PM2.5", "PM10", "SO2"], index=1)
+        pollutant_key = {"PM2.5": "pm2_5", "PM10": "pm10", "SO2": "so2"}[pollutant_label]
+        current_value = controls[2].number_input(
+            "Current value",
+            min_value=0.0,
+            max_value=800.0,
+            value=float(active_readings[pollutant_key]),
+            step=1.0,
+        )
+        rolling_average = controls[3].number_input(
+            "Rolling average",
+            min_value=0.0,
+            max_value=800.0,
+            value=80.0 if pollutant_label == "PM10" else 45.0,
+            step=1.0,
+        )
+        rolling_std = st.slider("Rolling standard deviation", min_value=1.0, max_value=100.0, value=20.0, step=1.0)
+        spike_result = detect_pollution_spike(current_value, rolling_average, rolling_std, pollutant_label)
+        threshold = rolling_average + 2 * rolling_std
         spike_frame = pd.DataFrame(
             [
                 {
-                    "Region": "Siltara",
-                    "Pollutant": "PM10",
-                    "Current value": active_readings["pm10"],
-                    "Rolling average": 80.0,
-                    "Spike ratio": round(spike_ratio, 2),
-                    "Severity": "High" if spike_ratio >= 1.75 else "Medium",
-                    "Message": "PM10 is significantly above recent trend. Monitor exposure and verify sensor readings.",
+                    "Region": anomaly_region.title(),
+                    "Pollutant": pollutant_label,
+                    "Current value": current_value,
+                    "Rolling average": rolling_average,
+                    "Review threshold": threshold,
+                    "Spike ratio": spike_result["spike_ratio"],
+                    "Severity": spike_result["severity"],
+                    "Message": spike_result["message"],
                 }
             ]
         )
         st.dataframe(spike_frame, use_container_width=True, hide_index=True)
-        st.warning("Pollution Spike Detected")
+        if spike_result["is_spike"]:
+            st.warning("Pollution spike detected")
+        else:
+            st.success("No major spike detected")
         st.caption("Spike detection is based on statistical deviation from recent trends and should be verified with official monitoring systems.")
 
     elif page == "AI Report":
