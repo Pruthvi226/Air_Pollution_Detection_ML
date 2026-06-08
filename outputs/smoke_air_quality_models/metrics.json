@@ -1,0 +1,232 @@
+{
+  "granularity": "hourly",
+  "split_counts": {
+    "train": 73828,
+    "validation": 15191,
+    "test": 15772
+  },
+  "targets": [
+    "pm2_5",
+    "pm10",
+    "so2"
+  ],
+  "model_comparison": [
+    {
+      "strategy": "single_target",
+      "mean_rmse": 36.730620630159855,
+      "mean_mae": 8.924562049918054,
+      "mean_r2": 0.3514009555839488,
+      "targets": 3
+    },
+    {
+      "strategy": "multi_output",
+      "mean_rmse": 37.32605271846818,
+      "mean_mae": 9.259924944852902,
+      "mean_r2": 0.30367915488826536,
+      "targets": 3
+    },
+    {
+      "strategy": "baseline_median",
+      "mean_rmse": 43.57653276794509,
+      "mean_mae": 19.598377081748243,
+      "mean_r2": -0.06676435868855957,
+      "targets": 3
+    }
+  ],
+  "test_metrics": [
+    {
+      "strategy": "baseline_median",
+      "split": "test",
+      "target": "pm10",
+      "rmse": 48.8303660489896,
+      "mae": 38.60520923154957,
+      "r2": -0.033289374235018654
+    },
+    {
+      "strategy": "multi_output",
+      "split": "test",
+      "target": "pm10",
+      "rmse": 32.766918375009226,
+      "mae": 19.35613102911851,
+      "r2": 0.5347212671210785
+    },
+    {
+      "strategy": "single_target",
+      "split": "test",
+      "target": "pm10",
+      "rmse": 31.096247133488756,
+      "mae": 18.292688934843348,
+      "r2": 0.5809576063922615
+    },
+    {
+      "strategy": "baseline_median",
+      "split": "test",
+      "target": "pm2_5",
+      "rmse": 78.4796977562752,
+      "mae": 17.575336038549324,
+      "r2": -0.0030871105566321333
+    },
+    {
+      "strategy": "multi_output",
+      "split": "test",
+      "target": "pm2_5",
+      "rmse": 76.62158095240295,
+      "mae": 6.938139386019405,
+      "r2": 0.04384957250186461
+    },
+    {
+      "strategy": "single_target",
+      "split": "test",
+      "target": "pm2_5",
+      "rmse": 76.70575626790415,
+      "mae": 7.2215477600674935,
+      "r2": 0.04174759359981861
+    },
+    {
+      "strategy": "baseline_median",
+      "split": "test",
+      "target": "so2",
+      "rmse": 3.419534498570459,
+      "mae": 2.614585975145829,
+      "r2": -0.1639165912740279
+    },
+    {
+      "strategy": "multi_output",
+      "split": "test",
+      "target": "so2",
+      "rmse": 2.589658827992366,
+      "mae": 1.4855044194207871,
+      "r2": 0.332466625041853
+    },
+    {
+      "strategy": "single_target",
+      "split": "test",
+      "target": "so2",
+      "rmse": 2.3898584890866683,
+      "mae": 1.259449454843323,
+      "r2": 0.4314976667597662
+    }
+  ],
+  "best_strategy_by_region_target": [
+    {
+      "region": "AIIMS",
+      "target": "pm10",
+      "strategy": "single",
+      "split": "test",
+      "rmse": 24.529902355183996,
+      "mae": 16.465576347215258,
+      "r2": 0.7423024261297054,
+      "rows": 3959
+    },
+    {
+      "region": "AIIMS",
+      "target": "pm2_5",
+      "strategy": "single",
+      "split": "test",
+      "rmse": 8.856857397254563,
+      "mae": 5.454304303778569,
+      "r2": 0.8186058075453001,
+      "rows": 3959
+    },
+    {
+      "region": "AIIMS",
+      "target": "so2",
+      "strategy": "single",
+      "split": "test",
+      "rmse": 2.4042443436450514,
+      "mae": 1.2797570611975206,
+      "r2": 0.5015921685134832,
+      "rows": 3959
+    },
+    {
+      "region": "BHATAGAON",
+      "target": "pm10",
+      "strategy": "single",
+      "split": "test",
+      "rmse": 38.88598049522651,
+      "mae": 18.189423866267795,
+      "r2": 0.36374170145753915,
+      "rows": 3953
+    },
+    {
+      "region": "BHATAGAON",
+      "target": "pm2_5",
+      "strategy": "multi",
+      "split": "test",
+      "rmse": 151.95712997169775,
+      "mae": 10.115651484276048,
+      "r2": 0.008654245052012621,
+      "rows": 3953
+    },
+    {
+      "region": "BHATAGAON",
+      "target": "so2",
+      "strategy": "single",
+      "split": "test",
+      "rmse": 2.781942947129158,
+      "mae": 1.2748392185125528,
+      "r2": 0.3687279700182592,
+      "rows": 3953
+    },
+    {
+      "region": "IGKV",
+      "target": "pm10",
+      "strategy": "single",
+      "split": "test",
+      "rmse": 15.573946720046235,
+      "mae": 10.443191574427685,
+      "r2": 0.7685377081676453,
+      "rows": 4041
+    },
+    {
+      "region": "IGKV",
+      "target": "pm2_5",
+      "strategy": "multi",
+      "split": "test",
+      "rmse": 6.159886610486627,
+      "mae": 4.011304910382489,
+      "r2": 0.8395253032829922,
+      "rows": 4041
+    },
+    {
+      "region": "IGKV",
+      "target": "so2",
+      "strategy": "single",
+      "split": "test",
+      "rmse": 1.530257956416948,
+      "mae": 1.0730135218688805,
+      "r2": 0.07425179860119269,
+      "rows": 4041
+    },
+    {
+      "region": "SILTARA",
+      "target": "pm10",
+      "strategy": "single",
+      "split": "test",
+      "rmse": 39.34331540034035,
+      "mae": 28.599461488898996,
+      "r2": 0.3814288480796375,
+      "rows": 3819
+    },
+    {
+      "region": "SILTARA",
+      "target": "pm2_5",
+      "strategy": "multi",
+      "split": "test",
+      "rmse": 14.691000198198497,
+      "mae": 8.165401638509627,
+      "r2": 0.5845087393372209,
+      "rows": 3819
+    },
+    {
+      "region": "SILTARA",
+      "target": "so2",
+      "strategy": "single",
+      "split": "test",
+      "rmse": 2.6658231400448824,
+      "mae": 1.4197411688545802,
+      "r2": 0.33414339595614384,
+      "rows": 3819
+    }
+  ]
+}

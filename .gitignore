@@ -1,6 +1,8 @@
 __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
+.pytest_cache/
+pytest-cache-files*/
 .venv/
 venv/
 .git_broken_backup_*/
@@ -15,6 +17,9 @@ outputs/*
 *.joblib
 !outputs/smoke_air_quality_models/
 outputs/smoke_air_quality_models/*
+!outputs/smoke_air_quality_models/metrics.json
+!outputs/smoke_air_quality_models/model_comparison.csv
+!outputs/smoke_air_quality_models/predictions.csv
 !outputs/smoke_air_quality_models/models/
 outputs/smoke_air_quality_models/models/*
 !outputs/smoke_air_quality_models/models/inference_bundle.joblib

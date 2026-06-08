@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
@@ -641,6 +642,49 @@ def plot_best_metric_heatmap(
     plt.close()
 
 
+def plot_actual_vs_predicted_target(predictions_df: pd.DataFrame, target: str, output_path: Path) -> None:
+    fig, axis = plt.subplots(figsize=(8, 5), constrained_layout=True)
+    axis.scatter(
+        predictions_df[f"actual_{target}"],
+        predictions_df[f"single_pred_{target}"],
+        alpha=0.25,
+        label="Single-target",
+    )
+    axis.scatter(
+        predictions_df[f"actual_{target}"],
+        predictions_df[f"multi_pred_{target}"],
+        alpha=0.18,
+        label="Multi-output",
+    )
+    combined_min = min(
+        predictions_df[f"actual_{target}"].min(),
+        predictions_df[f"single_pred_{target}"].min(),
+        predictions_df[f"multi_pred_{target}"].min(),
+    )
+    combined_max = max(
+        predictions_df[f"actual_{target}"].max(),
+        predictions_df[f"single_pred_{target}"].max(),
+        predictions_df[f"multi_pred_{target}"].max(),
+    )
+    axis.plot([combined_min, combined_max], [combined_min, combined_max], color="black", linestyle="--")
+    axis.set_title(f"Actual vs Predicted: {target}")
+    axis.set_xlabel("Actual")
+    axis.set_ylabel("Predicted")
+    axis.legend()
+    fig.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_model_leaderboard(model_comparison_df: pd.DataFrame, output_path: Path) -> None:
+    fig, axis = plt.subplots(figsize=(9, 5), constrained_layout=True)
+    sns.barplot(data=model_comparison_df, x="strategy", y="mean_rmse", ax=axis)
+    axis.set_title("Model Leaderboard by Mean Test RMSE")
+    axis.set_xlabel("Strategy")
+    axis.set_ylabel("Mean RMSE")
+    fig.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+
 def build_best_strategy_table(metrics_by_region_df: pd.DataFrame) -> pd.DataFrame:
     test_df = metrics_by_region_df[metrics_by_region_df["split"] == "test"].copy()
     winners = (
@@ -792,6 +836,24 @@ def main() -> int:
     )
     y_train_transformed = target_transformer.fit_transform(y_train)
 
+    print("Training baseline model...")
+    baseline_model = DummyRegressor(strategy="median")
+    baseline_model.fit(X_train, y_train_transformed)
+    baseline_validation_pred = target_transformer.inverse_transform_frame(
+        pd.DataFrame(
+            baseline_model.predict(X_validation),
+            index=X_validation.index,
+            columns=TARGET_COLUMNS,
+        )
+    )
+    baseline_test_pred = target_transformer.inverse_transform_frame(
+        pd.DataFrame(
+            baseline_model.predict(X_test),
+            index=X_test.index,
+            columns=TARGET_COLUMNS,
+        )
+    )
+
     print("Training multi-output model...")
     multi_pipeline = build_model_pipeline(
         random_state=args.random_state,
@@ -852,6 +914,12 @@ def main() -> int:
     print("Calculating metrics...")
     overall_metrics_rows: list[dict[str, float | str]] = []
     overall_metrics_rows.extend(
+        evaluate_predictions(y_validation, baseline_validation_pred, "baseline_median", "validation")
+    )
+    overall_metrics_rows.extend(
+        evaluate_predictions(y_test, baseline_test_pred, "baseline_median", "test")
+    )
+    overall_metrics_rows.extend(
         evaluate_predictions(y_validation, multi_validation_pred, "multi_output", "validation")
     )
     overall_metrics_rows.extend(evaluate_predictions(y_test, multi_test_pred, "multi_output", "test"))
@@ -897,6 +965,35 @@ def main() -> int:
     best_strategy_df = build_best_strategy_table(metrics_by_region_df)
     best_strategy_df.to_csv(output_dirs["reports"] / "best_strategy_by_region_target.csv", index=False)
 
+    test_metrics_df = overall_metrics_df[overall_metrics_df["split"] == "test"].copy()
+    model_comparison_df = (
+        test_metrics_df.groupby("strategy", as_index=False)
+        .agg(
+            mean_rmse=("rmse", "mean"),
+            mean_mae=("mae", "mean"),
+            mean_r2=("r2", "mean"),
+            targets=("target", "nunique"),
+        )
+        .sort_values(["mean_rmse", "mean_mae"], kind="stable")
+    )
+    model_comparison_df.to_csv(output_dirs["root"] / "model_comparison.csv", index=False)
+
+    compact_predictions = predictions_test.head(500).copy()
+    compact_predictions.to_csv(output_dirs["root"] / "predictions.csv", index=False)
+
+    metrics_payload = {
+        "granularity": args.granularity,
+        "split_counts": split_counts,
+        "targets": TARGET_COLUMNS,
+        "model_comparison": model_comparison_df.to_dict(orient="records"),
+        "test_metrics": test_metrics_df.to_dict(orient="records"),
+        "best_strategy_by_region_target": best_strategy_df.to_dict(orient="records"),
+    }
+    (output_dirs["root"] / "metrics.json").write_text(
+        json.dumps(metrics_payload, indent=2),
+        encoding="utf-8",
+    )
+
     print("Generating plots...")
     sns.set_theme(style="whitegrid")
     plot_metric_comparison(overall_metrics_df, output_dirs["plots"] / "metric_comparison.png")
@@ -929,6 +1026,14 @@ def main() -> int:
         title="Best Test MAE by Region and Target",
         output_path=output_dirs["plots"] / "best_strategy_mae_heatmap.png",
     )
+    plot_model_leaderboard(model_comparison_df, output_dirs["plots"] / "model_leaderboard.png")
+    for target in TARGET_COLUMNS:
+        safe_target = target.replace("_", "")
+        plot_actual_vs_predicted_target(
+            predictions_df=predictions_test,
+            target=target,
+            output_path=output_dirs["plots"] / f"actual_vs_predicted_{safe_target}.png",
+        )
 
     metadata = {
         "dataset": str(dataset_path),

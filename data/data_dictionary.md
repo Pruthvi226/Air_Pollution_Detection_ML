@@ -13,6 +13,17 @@
 | `no`, `no2`, `nox`, `nh3`, `co`, `o3`, `benz` | Additional pollutant readings when present |
 | `temp`, `hum`, `ws`, `wd`, `sr`, `rg` | Weather and station environment readings |
 
+## Prediction API Input Aliases
+
+| API field | Internal field |
+|---|---|
+| `pm25` | `pm2_5` |
+| `temperature` | `temp` |
+| `humidity` | `hum` |
+| `wind_speed` | `ws` |
+| `wind_direction` | `wd` |
+| `timestamp` | `date_time` |
+
 ## Generated Modeling Features
 
 | Feature family | Examples |

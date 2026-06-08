@@ -41,6 +41,12 @@ FastAPI service:
 uvicorn app.api:app --host 0.0.0.0 --port 8000
 ```
 
+Endpoints:
+
+- `GET /health`
+- `GET /metadata`
+- `POST /predict`
+
 CLI prediction:
 
 ```powershell

@@ -33,4 +33,15 @@ Outputs:
 - PM2.5 forecast
 - PM10 forecast
 - SO2 forecast
-- Risk label
+- AQI-style risk category
+- Health recommendation
+- Pollution spike alerts
+- Feature-importance explanation
+
+## Intelligence Layer
+
+The final upgrade adds `airsense/aqi.py`, `airsense/anomaly.py`, and `airsense/explainability.py`.
+
+- AQI risk converts model outputs into Good, Moderate, Poor, and Severe demo categories.
+- Anomaly alerts flag unusually high predicted PM2.5, PM10, or SO2 values.
+- Explainability uses feature importance when available and falls back gracefully if optional SHAP tooling is absent.

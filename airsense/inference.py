@@ -11,11 +11,13 @@ import joblib
 import numpy as np
 import pandas as pd
 
+from airsense import aqi
+from airsense.anomaly import detect_prediction_spikes
+from airsense.config import MODEL_DIR_ENV, PROJECT_ROOT, PROJECT_VERSION, SUPPORTED_REGIONS, TARGET_COLUMNS
+from airsense.explainability import explain_prediction
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-TARGET_COLUMNS = ["pm2_5", "pm10", "so2"]
-REGIONS = ["AIIMS", "BHATAGAON", "IGKV", "SILTARA"]
-MODEL_DIR_ENV = "AIRSENSE_MODEL_DIR"
+
+REGIONS = SUPPORTED_REGIONS
 
 INPUT_ALIASES = {
     "pm25": "pm2_5",
@@ -304,16 +306,31 @@ def _best_strategy(bundle: Mapping[str, Any], region: str, target: str) -> str:
 
 
 def classify_risk(predictions: Mapping[str, float]) -> dict[str, Any]:
-    pm25 = float(predictions.get("pm2_5", 0))
-    pm10 = float(predictions.get("pm10", 0))
-    so2 = float(predictions.get("so2", 0))
-    if pm25 > 90 or pm10 > 250 or so2 > 40:
-        return {"label": "Severe", "level": 4, "color": "#c2414b"}
-    if pm25 > 60 or pm10 > 160 or so2 > 28:
-        return {"label": "Poor", "level": 3, "color": "#d58c22"}
-    if pm25 > 35 or pm10 > 100 or so2 > 18:
-        return {"label": "Moderate", "level": 2, "color": "#0f7c75"}
-    return {"label": "Good", "level": 1, "color": "#207a58"}
+    risk = aqi.calculate_pollutant_risk(
+        predictions.get("pm2_5", 0),
+        predictions.get("pm10", 0),
+        predictions.get("so2", 0),
+    )
+    return {
+        **risk,
+        "label": risk["category"],
+    }
+
+
+def build_metadata(bundle: Mapping[str, Any]) -> dict[str, Any]:
+    metadata = dict(bundle.get("metadata", {}))
+    return {
+        "project": "AirSense AI",
+        "version": PROJECT_VERSION,
+        "targets": list(bundle.get("target_columns", TARGET_COLUMNS)),
+        "feature_names": list(bundle.get("feature_columns", [])),
+        "feature_count": int(len(bundle.get("feature_columns", []))),
+        "supported_regions": REGIONS,
+        "trained_at": metadata.get("trained_at", "generated smoke artifact"),
+        "granularity": metadata.get("granularity", "unknown"),
+        "model_dir": bundle.get("model_dir"),
+        "strategies": ["best", "multi_output", "single_target"],
+    }
 
 
 def predict(
@@ -351,12 +368,20 @@ def predict(
         target: round(float(max(prediction_frame.iloc[0][target], 0.0)), 3)
         for target in bundle.get("target_columns", TARGET_COLUMNS)
     }
+    risk = classify_risk(predictions)
+    explanation = explain_prediction(bundle, feature_frame=feature_frame)
+    spike_alerts = detect_prediction_spikes(predictions)
     return {
         "region": normalized_region,
         "date_time": str(coerce_timestamp(date_time)),
         "strategy": normalized_strategy,
         "predictions": predictions,
-        "risk": classify_risk(predictions),
+        "risk": risk,
+        "aqi": risk,
+        "recommendation": risk["recommendation"],
+        "summary": aqi.summarize_prediction({"predictions": predictions}),
+        "anomaly_alerts": spike_alerts,
+        "explanation": explanation,
         "feature_count": int(len(bundle["feature_columns"])),
         "model_dir": bundle.get("model_dir"),
     }
