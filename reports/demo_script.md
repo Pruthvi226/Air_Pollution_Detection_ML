@@ -13,9 +13,9 @@ I upgraded the project beyond simple prediction by adding AQI-style risk interpr
 1. Open the README and explain the architecture.
 2. Show `scripts/prepare_combined_dataset.py` for raw DCR ingestion and cleanup.
 3. Show `scripts/train_air_quality_models.py` for chronological splitting, feature engineering, training, metrics, and bundle export.
-4. Run `python scripts/predict_cli.py --region SILTARA --pm25 78 --pm10 214 --so2 34 --temp 35 --hum 68 --ws 1.8`.
-5. Open the Streamlit dashboard and use the Prediction Lab.
-6. Show the AQI risk card, anomaly alert, and explainability tab.
+4. Run `python scripts/predict_cli.py --region SILTARA --pm25 78 --pm10 145 --so2 14 --temp 31 --hum 62 --ws 2.1`.
+5. Open the Streamlit dashboard, use the Live Prediction tab, and click Run Demo Scenario.
+6. Show the AQI risk card, Anomaly Detection tab, Explainability tab, and AI Report tab.
 7. Open FastAPI `/metadata` and `/predict` to show the deployment contract.
 8. Close with the model card, limitations, and future real-time integration path.
 

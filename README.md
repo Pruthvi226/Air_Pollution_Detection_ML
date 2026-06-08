@@ -33,7 +33,7 @@ https://pruthvi226.github.io/Air_Pollution_Detection_ML/
 - AQI-style risk category and health recommendation layer.
 - Pollution spike/anomaly alerts for unusually high predicted values.
 - Explainability through tree feature importance with graceful optional-SHAP fallback.
-- Streamlit dashboard with Overview, Prediction Lab, Analytics, Model Performance, Explainability, and Documentation tabs.
+- Streamlit dashboard with Overview, Live Prediction, Region Analytics, Model Performance, Explainability, Anomaly Detection, AI Report, and Project Details tabs.
 - FastAPI endpoint with `/health`, `/metadata`, and `/predict`.
 - CLI predictor, tests, Dockerfile, Render config, model card, experiment report, and demo script.
 
@@ -209,7 +209,7 @@ uvicorn app.api:app --host 0.0.0.0 --port 8000
 Run a CLI prediction:
 
 ```powershell
-python scripts\predict_cli.py --region SILTARA --pm25 78 --pm10 214 --so2 34 --temp 35 --hum 68 --ws 1.8
+python scripts\predict_cli.py --region SILTARA --pm25 78 --pm10 145 --so2 14 --temp 31 --hum 62 --ws 2.1
 ```
 
 Run tests:
@@ -221,7 +221,7 @@ pytest -q
 API demo request:
 
 ```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/predict -ContentType "application/json" -Body '{"region":"SILTARA","pm25":78,"pm10":214,"so2":34,"temperature":35,"humidity":68,"wind_speed":1.8,"timestamp":"2026-06-08T10:00:00"}'
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/predict -ContentType "application/json" -Body '{"region":"SILTARA","pm25":78,"pm10":145,"so2":14,"temperature":31,"humidity":62,"wind_speed":2.1,"timestamp":"2026-06-08T08:00:00"}'
 ```
 
 Run the stronger final model in Colab:
@@ -301,7 +301,7 @@ The project website presents:
 - Verified dataset statistics
 - Workflow and technology stack
 - Demo model plots
-- Readiness checklist
+- Explainability, anomaly detection, AI report, and project-details sections
 - Clear recruiter-facing project pitch
 
 Open locally:
