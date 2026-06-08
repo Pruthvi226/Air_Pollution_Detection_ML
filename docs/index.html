@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AirSense AI - Multi-Region Air Pollution Prediction</title>
+    <title>AirSense AI - Multi-Region Air Quality Intelligence</title>
     <meta
       name="description"
-      content="A machine-learning project that combines DCR air-quality records from AIIMS, Bhatagaon, IGKV, and SILTARA to forecast PM2.5, PM10, and SO2."
+      content="A multi-region air-quality intelligence platform that transforms DCR monitoring data into PM2.5, PM10, and SO2 forecasts with risk analytics."
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -15,12 +15,12 @@
       <a class="brand" href="#top">AirSense AI</a>
       <div class="nav-container">
         <nav aria-label="Project sections">
-          <a href="#demo" class="active">Demo</a>
+          <a href="#forecast" class="active">Forecast</a>
           <a href="#dataset">Data</a>
           <a href="#pipeline">Pipeline</a>
           <a href="#results">Results</a>
           <a href="#explainability">Explain</a>
-          <a href="#anomaly">Anomaly</a>
+          <a href="#anomaly">Alerts</a>
           <a href="#report">Report</a>
           <a href="#details">Details</a>
         </nav>
@@ -47,16 +47,16 @@
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-overlay"></div>
         <div class="hero-content">
-          <p class="eyebrow">AI / ML Internship Portfolio Project</p>
+          <p class="eyebrow">Environmental Intelligence Platform</p>
           <h1 id="hero-title">AirSense <span>AI</span></h1>
           <p class="hero-copy">
-            Multi-region air-pollution forecasting that cleans real DCR workbooks from
-            four Raipur monitoring regions and predicts future PM2.5, PM10, and SO2 levels.
+            Multi-region air-quality forecasting that transforms real DCR monitoring records
+            into pollutant forecasts, risk labels, anomaly signals, and explainable analytics.
           </p>
           <div class="hero-actions" aria-label="Project links">
-            <a class="btn btn-primary" href="#demo">Try Prediction Demo</a>
-            <a class="btn btn-secondary" href="../README.md">Read Project Docs</a>
-            <a class="btn btn-secondary" href="../notebooks/air_pollution_prediction_colab.ipynb">Open Colab Notebook</a>
+            <a class="btn btn-primary" href="#forecast">Open Live Forecast</a>
+            <a class="btn btn-secondary" href="#results">View Model Results</a>
+            <a class="btn btn-secondary" href="#pipeline">Review Pipeline</a>
           </div>
         </div>
       </section>
@@ -64,28 +64,28 @@
       <section class="section" aria-label="Project status">
         <div class="status-band">
           <div class="status-band-title">
-            <span class="status-label">Project demo</span>
-            <strong>Interactive forecasting walkthrough with deployable ML app packaging</strong>
+            <span class="status-label">System overview</span>
+            <strong>Forecasting workflow with deployable ML app packaging</strong>
           </div>
           <p>
-            Show the full workflow in one place: raw DCR data preparation, feature engineering,
+            Explore the full workflow in one place: DCR data preparation, feature engineering,
             prediction inputs, model outputs, visual evaluation artifacts, and dashboard/API readiness.
           </p>
         </div>
       </section>
 
-      <section class="section" id="demo" aria-labelledby="demo-title">
+      <section class="section" id="forecast" aria-labelledby="forecast-title">
         <div class="section-heading">
-          <p class="eyebrow">Interviewer Demo</p>
-          <h2 id="demo-title">Input station readings and show a next-step prediction</h2>
+          <p class="eyebrow">Live Forecast</p>
+          <h2 id="forecast-title">Input station readings and forecast the next pollutant step</h2>
           <p>
-            This browser demo mirrors the project workflow with region, pollutant, weather,
-            and time inputs. The production model is trained in Python and served through the
-            Streamlit/API app; this page uses a lightweight client-side estimator for GitHub Pages.
+            This interactive preview mirrors the deployed model contract with region, pollutant,
+            weather, and time inputs. The Streamlit and FastAPI apps serve the trained Python
+            artifact; this static page provides an instant client-side forecast preview.
           </p>
         </div>
 
-        <div class="demo-layout">
+        <div class="forecast-layout">
           <form class="predictor glass-panel" id="prediction-form">
             <div class="form-row">
               <label for="region">Region</label>
@@ -157,7 +157,7 @@
             </div>
 
             <div class="preset-row" aria-label="Example input presets">
-              <button type="button" class="preset-card preset-card-primary" data-preset="demo">Run Demo Scenario</button>
+              <button type="button" class="preset-card preset-card-primary" data-preset="siltara">Load Siltara Scenario</button>
               <button type="button" class="preset-card" data-preset="clean">Clean Area</button>
               <button type="button" class="preset-card" data-preset="traffic">Traffic Peak</button>
               <button type="button" class="preset-card" data-preset="industrial">Industrial Zone</button>
@@ -266,12 +266,12 @@
           <article class="metric-card">
             <span>Quarter-hourly rows</span>
             <strong>467,188</strong>
-            <p>Main data resolution for the final forecasting workflow.</p>
+            <p>Highest-resolution data available for the strongest final training run.</p>
           </article>
           <article class="metric-card">
             <span>Hourly rows</span>
             <strong>119,243</strong>
-            <p>Used for the quick local validation run and sanity checks.</p>
+            <p>Used by the current local runtime artifact and model validation reports.</p>
           </article>
           <article class="metric-card">
             <span>Regions</span>
@@ -366,10 +366,11 @@
       <section class="section" id="results" aria-labelledby="results-title">
         <div class="section-heading">
           <p class="eyebrow">Modeling Evidence</p>
-          <h2 id="results-title">Demo outputs from the validated local run</h2>
+          <h2 id="results-title">Validated outputs from the current hourly model</h2>
           <p>
-            These plots come from a fast hourly smoke run used to verify the end-to-end model
-            workflow. Replace them with final quarter-hourly Colab results after the full run.
+            These plots summarize the current deployable hourly artifact. PM10 and SO2 show
+            useful signal; PM2.5 should be improved with the full quarter-hourly training run
+            before making strong accuracy claims.
           </p>
         </div>
 
@@ -390,21 +391,27 @@
 
         <div class="score-line">
           <div class="score-cell">
-            <span>Best PM10 demo R2</span>
+            <span>Best PM10 R2</span>
             <strong>0.58</strong>
           </div>
           <div class="score-cell">
-            <span>Best SO2 demo R2</span>
+            <span>Best SO2 R2</span>
             <strong>0.43</strong>
           </div>
           <div class="score-cell">
-            <span>Engineered features</span>
-            <strong>201</strong>
+            <span>PM2.5 current R2</span>
+            <strong>0.04</strong>
           </div>
           <div class="score-cell">
-            <span>Smoke test rows</span>
+            <span>Hourly evaluation rows</span>
             <strong>104,791</strong>
           </div>
+        </div>
+
+        <div class="result-note">
+          <strong>Submission assessment:</strong>
+          PM10 and SO2 are solid enough for a professional project showcase. PM2.5 needs a stronger
+          final training pass before presenting the model as high-accuracy forecasting.
         </div>
       </section>
 
@@ -414,7 +421,7 @@
           <h2 id="explainability-title">Show why the model made the forecast</h2>
           <p>
             The deployable app exposes model feature importance and converts the signal into
-            recruiter-friendly language for pollutant, weather, time, and region factors.
+            plain-language context for pollutant, weather, time, and region factors.
           </p>
         </div>
 
@@ -440,10 +447,10 @@
       <section class="section section-muted" id="anomaly" aria-labelledby="anomaly-title">
         <div class="section-heading">
           <p class="eyebrow">Anomaly Detection</p>
-          <h2 id="anomaly-title">Flag sudden pollution spikes before the review call</h2>
+          <h2 id="anomaly-title">Flag sudden pollution spikes for operational review</h2>
           <p>
-            The demo checks pollutant readings and forecast output against conservative
-            presentation thresholds so high-risk scenarios are easy to explain live.
+            The forecasting workflow checks pollutant readings and forecast output against
+            configurable alert thresholds so elevated scenarios can be triaged quickly.
           </p>
         </div>
 
@@ -451,7 +458,7 @@
           <div>
             <span class="status-label">Current alert</span>
             <strong id="anomaly-status">PM10 spike watch active</strong>
-            <p id="anomaly-copy">SILTARA demo readings are close to the PM10 review threshold.</p>
+            <p id="anomaly-copy">SILTARA readings are close to the PM10 review threshold.</p>
           </div>
           <div class="alert-metrics">
             <div>
@@ -482,7 +489,7 @@
 
         <div class="report-card">
           <div class="report-card-header">
-            <span>Generated demo report</span>
+            <span>Generated case report</span>
             <strong id="report-risk">Moderate risk</strong>
           </div>
           <pre id="report-text" class="report-body"></pre>
@@ -492,7 +499,7 @@
       <section class="section section-muted" id="details" aria-labelledby="details-title">
         <div class="section-heading">
           <p class="eyebrow">Project Details</p>
-          <h2 id="details-title">Mapped directly to AI internship expectations</h2>
+          <h2 id="details-title">Mapped to production ML project capabilities</h2>
           <p>
             The repository demonstrates data engineering, modeling, evaluation,
             explainability, deployment, and communication from one coherent ML product.

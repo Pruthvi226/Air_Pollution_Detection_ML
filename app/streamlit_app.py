@@ -138,7 +138,7 @@ def ensure_prediction_state() -> None:
         st.session_state.setdefault(PREDICTION_STATE_KEYS[reading_key], value)
 
 
-def demo_prediction(bundle: dict) -> tuple[dict, dict]:
+def scenario_prediction(bundle: dict) -> tuple[dict, dict]:
     date_time = datetime.combine(DEMO_SCENARIO["date"], DEMO_SCENARIO["time"])
     readings = dict(DEMO_SCENARIO["readings"])
     result = predict(
@@ -155,12 +155,12 @@ def prediction_form(bundle: dict) -> tuple[dict, dict]:
     ensure_prediction_state()
 
     button_cols = st.columns(2)
-    if button_cols[0].button("Run Demo Scenario", type="primary", use_container_width=True):
+    if button_cols[0].button("Load Siltara Scenario", type="primary", use_container_width=True):
         load_prediction_state(DEMO_SCENARIO)
     if button_cols[1].button("Reset Inputs", use_container_width=True):
         load_prediction_state(DEFAULT_SCENARIO)
 
-    st.caption("Demo scenario: SILTARA, 08:00, PM2.5 78, PM10 145, SO2 14, temperature 31, humidity 62, wind 2.1.")
+    st.caption("SILTARA preset: 08:00, PM2.5 78, PM10 145, SO2 14, temperature 31, humidity 62, wind 2.1.")
 
     region = st.selectbox(
         "Region",
@@ -267,7 +267,7 @@ def render_prediction_result(result: dict) -> None:
 
 def build_anomaly_events(result: dict, readings: dict) -> list[dict]:
     alerts = list(result.get("anomaly_alerts", []))
-    demo_alerts = detect_prediction_spikes(
+    input_alerts = detect_prediction_spikes(
         {
             "pm2_5": readings.get("pm2_5", 0),
             "pm10": readings.get("pm10", 0),
@@ -275,10 +275,10 @@ def build_anomaly_events(result: dict, readings: dict) -> list[dict]:
         },
         thresholds={"pm2_5": 75.0, "pm10": 145.0, "so2": 28.0},
     )
-    for alert in demo_alerts:
+    for alert in input_alerts:
         alert = dict(alert)
         label = POLLUTANT_LABELS.get(str(alert["pollutant"]), str(alert["pollutant"]).upper())
-        alert["message"] = f"{label} input is elevated for the recruiter demo threshold."
+        alert["message"] = f"{label} input is elevated for the configured review threshold."
         if not any(existing.get("pollutant") == alert.get("pollutant") for existing in alerts):
             alerts.append(alert)
     return alerts
@@ -298,7 +298,7 @@ def render_anomaly_events(result: dict, readings: dict) -> None:
         st.success("No pollutant exceeds the active spike thresholds for this scenario.")
 
     st.markdown(
-        "The demo anomaly layer checks both the deployed forecast thresholds and the current station readings so an interviewer can see how sudden PM10/PM2.5 spikes would be flagged before a public-health review."
+        "The anomaly layer checks both the deployed forecast thresholds and current station readings so elevated PM10/PM2.5 conditions can be flagged for review."
     )
 
 
@@ -346,7 +346,7 @@ def render_ai_report(result: dict, readings: dict, metadata: dict) -> None:
     st.download_button(
         "Download AI Report",
         data=report,
-        file_name="airsense_ai_demo_report.txt",
+        file_name="airsense_ai_report.txt",
         mime="text/plain",
         use_container_width=True,
     )
@@ -487,9 +487,11 @@ def main() -> None:
     st.sidebar.write(f"Version: `{metadata['version']}`")
     st.sidebar.write(f"Granularity: `{metadata['granularity']}`")
     st.sidebar.write(f"Features: `{metadata['feature_count']}`")
-    st.sidebar.write(f"Artifact: `{Path(str(metadata['model_dir'])).name}`")
+    artifact_name = Path(str(metadata["model_dir"])).name
+    artifact_label = "Hourly runtime bundle" if artifact_name == "smoke_air_quality_models" else artifact_name
+    st.sidebar.write(f"Artifact: `{artifact_label}`")
 
-    active_result, active_readings = demo_prediction(bundle)
+    active_result, active_readings = scenario_prediction(bundle)
 
     tabs = st.tabs(
         [
@@ -517,9 +519,9 @@ def main() -> None:
             "Raw DCR files -> cleaning -> feature engineering -> model training -> AQI risk -> dashboard/API",
             language="text",
         )
-        st.subheader("Recruiter Demo Flow")
+        st.subheader("Recommended Review Flow")
         st.markdown(
-            "Open Live Prediction, click Run Demo Scenario, read the AQI card and anomaly signal, then show Model Performance, Explainability, and the AI Report."
+            "Open Live Prediction, load the Siltara scenario, review the AQI card and anomaly signal, then inspect Model Performance, Explainability, and the AI Report."
         )
 
     with tabs[1]:
@@ -552,6 +554,9 @@ def main() -> None:
         metrics = load_csv(reports_dir / "metrics_overall.csv")
         if not metrics.empty:
             st.dataframe(metrics, use_container_width=True)
+            st.markdown(
+                "Current hourly artifact: PM10 and SO2 show useful predictive signal, while overall PM2.5 needs improvement before strong accuracy claims. A final quarter-hourly training run should be used for public submission metrics."
+            )
         else:
             st.info("Metrics CSV was not found for this artifact; showing bundled plot evidence when available.")
         for filename in ["metric_comparison.png", "region_prediction_timeseries.png", "predicted_vs_actual_scatter.png"]:
@@ -583,21 +588,19 @@ def main() -> None:
         st.markdown(
             "AirSense AI is packaged as a deployable ML project: shared inference code powers Streamlit, FastAPI, and CLI usage from the same model artifact."
         )
-        st.subheader("Job Description Mapping")
+        st.subheader("Capability Mapping")
         st.table(
             pd.DataFrame(
                 [
-                    {"AI Intern need": "Preprocessing", "Project evidence": "DCR workbook extraction, timestamp parsing, duplicate handling"},
-                    {"AI Intern need": "ML modeling", "Project evidence": "Random Forest forecasting for PM2.5, PM10, and SO2"},
-                    {"AI Intern need": "Evaluation", "Project evidence": "RMSE, MAE, R2, chronological split, region-wise reports"},
-                    {"AI Intern need": "Deployment", "Project evidence": "Streamlit dashboard, FastAPI endpoint, Docker, Render config"},
-                    {"AI Intern need": "Explainability", "Project evidence": "Feature importance summaries and plain-English model explanations"},
-                    {"AI Intern need": "Communication", "Project evidence": "AI report generator, portfolio website, demo script, and model card"},
+                    {"Capability": "Data preprocessing", "Project evidence": "DCR workbook extraction, timestamp parsing, duplicate handling"},
+                    {"Capability": "ML modeling", "Project evidence": "Random Forest forecasting for PM2.5, PM10, and SO2"},
+                    {"Capability": "Evaluation", "Project evidence": "RMSE, MAE, R2, chronological split, region-wise reports"},
+                    {"Capability": "Deployment", "Project evidence": "Streamlit dashboard, FastAPI endpoint, Docker, Render config"},
+                    {"Capability": "Explainability", "Project evidence": "Feature importance summaries and plain-English model explanations"},
+                    {"Capability": "Communication", "Project evidence": "AI report generator, portfolio website, model card, and experiment report"},
                 ]
             )
         )
-        st.subheader("Demo Script")
-        st.markdown(Path(PROJECT_ROOT / "reports" / "demo_script.md").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

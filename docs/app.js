@@ -7,7 +7,7 @@
   };
 
   const presets = {
-    demo: {
+    siltara: {
       region: "SILTARA",
       pm25: 78,
       pm10: 145,
@@ -186,7 +186,7 @@
     const primaryDriver = prediction.pm10 >= prediction.pm25 * 1.8 ? "PM10 lag features" : "PM2.5 trend features";
     const weatherSignal = input.wind <= 2.5 ? "Low wind stagnation" : "Wind dispersion relief";
     const anomalyStatus = alerts.length ? "Spike watch active" : "No spike detected";
-    const anomalyCopy = alerts.length ? alerts.join("; ") : "Current readings stay below the active presentation thresholds.";
+    const anomalyCopy = alerts.length ? alerts.join("; ") : "Current readings stay below the active alert thresholds.";
     const reportLines = [
       "AirSense AI report",
       `Region: ${prediction.regionLabel}`,
@@ -194,11 +194,11 @@
       `Forecast: PM2.5 ${round1(prediction.pm25)} ug/m3, PM10 ${round1(prediction.pm10)} ug/m3, SO2 ${round1(prediction.so2)} ug/m3`,
       `AQI-style risk: ${risk.label}`,
       `Anomaly review: ${anomalyCopy}`,
-      "Recommendation: Use the Streamlit app for the production model, downloadable report, and artifact-backed explanation.",
+      "Recommendation: Use the Streamlit app for the artifact-backed forecast, downloadable report, and model explanation.",
     ];
 
     setText("top-factor", `${primaryDriver} + ${prediction.regionLabel}`);
-    setText("factor-copy", `${primaryDriver} and station context are the strongest live-demo drivers.`);
+    setText("factor-copy", `${primaryDriver} and station context are the strongest forecast drivers.`);
     setText("inline-anomaly-status", anomalyStatus);
     setText("inline-anomaly-copy", anomalyCopy);
     setText("explain-primary", primaryDriver);

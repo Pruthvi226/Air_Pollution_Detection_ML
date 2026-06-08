@@ -5,18 +5,18 @@
 ![Scikit-learn](https://img.shields.io/badge/Scikit--learn-ML%20Forecasting-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)
 ![Colab](https://img.shields.io/badge/Google%20Colab-Heavy%20Training-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=black)
 
-AirSense AI is an end-to-end AI/ML product demo for multi-region air-quality forecasting, AQI-style risk intelligence, pollution spike detection, and explainable pollution analytics.
+AirSense AI is an end-to-end AI/ML project for multi-region air-quality forecasting, AQI-style risk intelligence, pollution spike detection, and explainable pollution analytics.
 
 It converts messy DCR air-quality workbooks from four Raipur monitoring regions into a combined time-series dataset, engineers leakage-safe forecasting features, trains models for `PM2.5`, `PM10`, and `SO2`, explains predictions, and serves results through Streamlit, FastAPI, and a CLI.
 
-This project is designed as a clean AI/ML internship portfolio project: heavy preprocessing, feature engineering, predictive modeling, evaluation, visual reporting, a Streamlit dashboard, a FastAPI prediction endpoint, and a website-ready case study.
+This project is designed as a professional ML case study: heavy preprocessing, feature engineering, predictive modeling, evaluation, visual reporting, a Streamlit dashboard, a FastAPI prediction endpoint, and a website-ready project presentation.
 
 ## Live Project Website
 
 The portfolio website is inside [`docs/`](docs/).
 
-It includes an interviewer-ready prediction demo where you can enter station readings
-and instantly show predicted `PM2.5`, `PM10`, and `SO2` values in the browser.
+It includes an interactive forecast preview where you can enter station readings
+and instantly view predicted `PM2.5`, `PM10`, and `SO2` values in the browser.
 
 After pushing to GitHub, enable GitHub Pages from the `docs/` folder. The expected public URL will be:
 
@@ -35,7 +35,7 @@ https://pruthvi226.github.io/Air_Pollution_Detection_ML/
 - Explainability through tree feature importance with graceful optional-SHAP fallback.
 - Streamlit dashboard with Overview, Live Prediction, Region Analytics, Model Performance, Explainability, Anomaly Detection, AI Report, and Project Details tabs.
 - FastAPI endpoint with `/health`, `/metadata`, and `/predict`.
-- CLI predictor, tests, Dockerfile, Render config, model card, experiment report, and demo script.
+- CLI predictor, tests, Dockerfile, Render config, model card, and experiment report.
 
 ## Deployable App Layer
 
@@ -91,7 +91,7 @@ Large raw and processed data files are intentionally ignored by Git. Recreate th
 docs/
   index.html                         # GitHub Pages-ready portfolio website
   styles.css                         # Website styling
-  assets/                            # Demo plots used by the website
+  assets/                            # Model plots used by the website
 
 app/
   streamlit_app.py                    # Deployable dashboard
@@ -118,7 +118,7 @@ scripts/
 data/
   .gitkeep                            # Raw/processed datasets are generated locally
   data_dictionary.md                  # Column and feature documentation
-  sample/sample_air_quality.csv       # Tiny demo/sample contract file
+  sample/sample_air_quality.csv       # Tiny sample contract file
 
 outputs/
   .gitkeep                            # Model artifacts and reports are generated locally
@@ -126,7 +126,6 @@ outputs/
 reports/
   model_card.md
   experiment_report.md
-  demo_script.md
   limitations_and_future_scope.md
 
 Dockerfile
@@ -218,7 +217,7 @@ Run tests:
 pytest -q
 ```
 
-API demo request:
+API request:
 
 ```powershell
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/predict -ContentType "application/json" -Body '{"region":"SILTARA","pm25":78,"pm10":145,"so2":14,"temperature":31,"humidity":62,"wind_speed":2.1,"timestamp":"2026-06-08T08:00:00"}'
@@ -245,7 +244,7 @@ Recommended flow:
 2. Run dataset preparation.
 3. Train the quarter-hourly model.
 4. Export final plots from `outputs/air_quality_models/plots/`.
-5. Replace demo images in `docs/assets/` with the final Colab plots.
+5. Replace website images in `docs/assets/` with the final Colab plots.
 
 ## Modeling Approach
 
@@ -281,9 +280,9 @@ Evaluation:
 - Model comparison leaderboard
 - Compact `metrics.json`, `model_comparison.csv`, and `predictions.csv` artifacts on training runs
 
-## Job Description Relevance
+## Capability Mapping
 
-| AI internship responsibility | AirSense AI evidence |
+| ML project capability | AirSense AI evidence |
 |---|---|
 | Data preprocessing | Raw DCR extraction, sheet discovery, timestamp parsing, duplicate handling |
 | Feature engineering | Lag features, rolling statistics, cyclic encodings, region indicators |
@@ -297,12 +296,12 @@ Evaluation:
 
 The project website presents:
 
-- Input form and prediction-result demo
+- Input form and prediction-result preview
 - Verified dataset statistics
 - Workflow and technology stack
-- Demo model plots
+- Current model plots
 - Explainability, anomaly detection, AI report, and project-details sections
-- Clear recruiter-facing project pitch
+- Clear project pitch and technical evidence
 
 Open locally:
 
@@ -334,7 +333,7 @@ Ready:
 Final polish before public job submission:
 
 - Run the final quarter-hourly model in Colab.
-- Replace demo website plots with final quarter-hourly result plots.
+- Replace website plots with final quarter-hourly result plots.
 - Publish the website through GitHub Pages.
 - Upload or generate the final `inference_bundle.joblib` in the deployment environment.
 

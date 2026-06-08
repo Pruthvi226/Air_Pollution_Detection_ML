@@ -408,8 +408,8 @@ h1 span {
   margin-top: 14px;
 }
 
-/* Prediction Demo Layout */
-.demo-layout {
+/* Forecast Layout */
+.forecast-layout {
   display: grid;
   grid-template-columns: 1fr 1.1fr;
   gap: 32px;
@@ -1153,6 +1153,21 @@ figure figcaption {
   line-height: 1;
 }
 
+.result-note {
+  margin-top: 18px;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  font-size: 0.95rem;
+}
+
+.result-note strong {
+  color: var(--text-primary);
+}
+
 /* Footer Styling */
 footer {
   background: var(--bg-secondary);
@@ -1193,7 +1208,7 @@ footer p {
     min-height: auto;
     padding-top: 120px;
   }
-  .demo-layout {
+  .forecast-layout {
     grid-template-columns: 1fr;
   }
   .metric-grid, .process, .score-line, .insight-grid, .mapping-grid {
