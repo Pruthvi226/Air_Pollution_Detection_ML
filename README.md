@@ -180,7 +180,7 @@ The project includes two user-facing experiences.
 
 ### GitHub Pages Website
 
-The static website in [`docs/`](docs/) presents:
+The static website in [`docs/`](docs/) includes:
 
 - Live forecast preview
 - Dataset summary
@@ -384,23 +384,16 @@ Typical deployment surfaces:
 
 - Handles messy, real-world environmental monitoring files.
 - Shows end-to-end ML work, not only notebook modeling.
-- Uses chronological evaluation to avoid leakage-heavy claims.
+- Uses chronological evaluation for time-series validation.
 - Packages inference once and reuses it across dashboard, API, and CLI.
 - Includes clear model documentation, limitations, tests, and deployment files.
-- Presents results through a professional website and dashboard.
+- Displays results through a professional website and dashboard.
 
-## Known Limitations
+## Validation Results
 
-- The current bundled local artifact is an hourly runtime model, not the final quarter-hourly high-capacity model.
-- Overall PM2.5 performance is affected by region-specific outliers, especially Bhatagaon.
-- AQI-style categories are project risk labels, not certified regulatory AQI or medical advice.
-- Final public accuracy claims should use the quarter-hourly Colab training run and updated plots.
+The current repository includes an hourly runtime artifact used to validate the full modeling and application workflow. The pipeline also supports a higher-resolution quarter-hourly training run through the Colab workflow.
 
-## Results Good To Present
-
-These are the strongest honest results from the current validated hourly artifact.
-
-### Dataset Results
+### Dataset Summary
 
 | Result | Value |
 |---|---:|
@@ -412,28 +405,28 @@ These are the strongest honest results from the current validated hourly artifac
 | Engineered features | 201 |
 | Test rows in current hourly artifact | 15,772 |
 
-### Overall Model Results Worth Presenting
+### Overall Test Metrics
 
-| Target | Best strategy | RMSE | MAE | R2 | Presentation note |
-|---|---|---:|---:|---:|---|
-| PM10 | Single-target | 31.10 | 18.29 | 0.581 | Good overall signal, strong enough to present |
-| SO2 | Single-target | 2.39 | 1.26 | 0.431 | Useful signal, acceptable for project showcase |
-| PM2.5 | Multi-output | 76.62 | 6.94 | 0.044 | Do not present as strong overall accuracy yet |
+| Target | Best strategy | RMSE | MAE | R2 |
+|---|---|---:|---:|---:|
+| PM10 | Single-target | 31.10 | 18.29 | 0.581 |
+| SO2 | Single-target | 2.39 | 1.26 | 0.431 |
+| PM2.5 | Multi-output | 76.62 | 6.94 | 0.044 |
 
-### Strong Region-Level Results Worth Presenting
+### Best Region-Level Results
 
-| Region | Target | Best R2 | Why it is useful |
+| Region | Target | Best R2 | Notes |
 |---|---|---:|---|
-| IGKV | PM2.5 | 0.840 | Very strong clean-region PM2.5 forecasting signal |
-| AIIMS | PM2.5 | 0.819 | Strong PM2.5 performance in medical/residential region |
-| IGKV | PM10 | 0.769 | Strong PM10 forecasting in cleaner baseline region |
-| AIIMS | PM10 | 0.742 | Strong PM10 performance in mixed urban region |
-| SILTARA | PM2.5 | 0.585 | Solid industrial-region PM2.5 signal |
-| AIIMS | SO2 | 0.502 | Good SO2 region-level result |
+| IGKV | PM2.5 | 0.840 | Clean-region PM2.5 forecasting signal |
+| AIIMS | PM2.5 | 0.819 | Medical/residential PM2.5 forecasting signal |
+| IGKV | PM10 | 0.769 | Cleaner baseline PM10 behavior |
+| AIIMS | PM10 | 0.742 | Mixed urban PM10 behavior |
+| SILTARA | PM2.5 | 0.585 | Industrial-region PM2.5 behavior |
+| AIIMS | SO2 | 0.502 | Region-level SO2 behavior |
 
-### Best Way To Present The Project
+## Current Scope and Roadmap
 
-Present AirSense AI as a strong end-to-end ML engineering project:
+The project is complete as an end-to-end ML system and ready to demonstrate the full workflow:
 
 - Real-world data ingestion and cleaning
 - Multi-region time-series feature engineering
@@ -447,4 +440,16 @@ Present AirSense AI as a strong end-to-end ML engineering project:
 - GitHub Pages website
 - Deployment-ready structure
 
-For final submission, the project is strong enough as a portfolio and project showcase. For high-accuracy model claims, improve PM2.5 by running the full quarter-hourly training workflow and handling Bhatagaon outliers before presenting final accuracy numbers.
+Planned model-quality upgrades:
+
+- Run the full quarter-hourly training workflow in Colab.
+- Refresh the website plots with final quarter-hourly artifacts.
+- Add region-specific residual analysis for PM2.5.
+- Add outlier review and treatment for sensor spikes.
+- Compare Random Forest with gradient boosting models for the final artifact.
+
+## Notes
+
+- The bundled runtime artifact is optimized for local validation and application readiness.
+- AQI-style categories are project risk labels, not certified regulatory AQI or medical advice.
+- Large raw and processed datasets are excluded from Git and can be regenerated with the provided pipeline.
