@@ -1,6 +1,4 @@
-# AirSense AI
-
-## Multi-Region Air Quality Forecasting and Risk Intelligence
+# AirSense AI - Air Pollution Forecasting & Risk Analytics Dashboard
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-Data%20Engineering-150458?style=for-the-badge&logo=pandas&logoColor=white)
@@ -9,151 +7,140 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Website-222222?style=for-the-badge&logo=githubpages&logoColor=white)
 
-AirSense AI is a complete machine-learning project that converts real multi-region air-quality monitoring workbooks into a deployable forecasting and risk-intelligence system.
+## Overview
 
-The project cleans raw DCR files from four Raipur monitoring regions, builds a combined time-series dataset, engineers leakage-safe forecasting features, trains models for `PM2.5`, `PM10`, and `SO2`, explains predictions, detects pollution spikes, and serves the result through a professional website, Streamlit dashboard, FastAPI service, and CLI predictor.
+AirSense AI is an end-to-end machine learning dashboard that predicts PM2.5, PM10, and SO2 levels using multi-region air-quality monitoring data. It includes preprocessing, feature engineering, model evaluation, AQI risk interpretation, region-level analysis, explainability, anomaly detection, and a deployable dashboard/API layer.
 
-## Live Website
+This project is positioned as an **Air Pollution Forecasting & Risk Analytics System**, not just an air pollution detection notebook. It demonstrates practical AI engineering for environmental monitoring: converting messy raw DCR workbooks into a structured forecasting workflow and presenting results through a professional monitoring dashboard.
 
-The GitHub Pages-ready website is in [`docs/`](docs/).
+## Key Highlights
 
-Expected public URL after GitHub Pages is enabled from the `docs/` folder:
+- Processed `586,431` cleaned air-quality records.
+- Used `119,243` hourly modeling records for the current runtime artifact.
+- Preserved `467,188` quarter-hourly records for high-resolution final training.
+- Engineered `201` lag, rolling, time, weather, and region features.
+- Predicted `PM2.5`, `PM10`, and `SO2`.
+- Achieved global PM10 R2 of `0.581`.
+- Achieved global SO2 R2 of `0.431`.
+- Achieved region-level PM2.5 R2 of `0.840` for IGKV and `0.819` for AIIMS.
+- Built a dashboard for prediction, model evaluation, risk insights, anomaly detection, and report generation.
+- Added FastAPI, CLI prediction, Docker/Render deployment files, model reports, and tests.
 
-```text
-https://pruthvi226.github.io/Air_Pollution_Detection_ML/
-```
+## Why Region-Level Modeling Matters
 
-Local static preview:
+The global PM2.5 model has weak performance because PM2.5 behavior varies strongly across regions. Region-specific modeling improves PM2.5 forecasting significantly, reaching R2 = `0.840` for IGKV and R2 = `0.819` for AIIMS.
 
-```text
-docs/index.html
-```
+This is an important modeling insight: air pollution forecasting should not always depend on one global model. Localized models can better capture region-specific emission patterns, sensor behavior, weather effects, and pollution trends.
 
-Streamlit dashboard:
+## Dashboard Features
 
-```powershell
-streamlit run app\streamlit_app.py
-```
+The Streamlit dashboard uses sidebar navigation and a dark, modern layout.
 
-## Project Snapshot
+- Overview
+- Live Prediction
+- Dataset Summary
+- Global Model Performance
+- Region-Specific Model Performance
+- Region Analytics
+- Feature Importance / SHAP-style Explainability
+- Pollution Spike Detection
+- AI-Generated Air Quality Summary
+- Project Details
 
-| Area | What was built |
+The static website in [`docs/`](docs/) provides a GitHub Pages-ready project presentation with forecast preview, results, explainability, anomaly detection, and report sections.
+
+## Tech Stack
+
+| Layer | Tools |
 |---|---|
-| Data engineering | Raw DCR zip/workbook extraction, sheet parsing, timestamp normalization, duplicate handling, and all-region merge |
-| Forecasting | Next-step prediction for `PM2.5`, `PM10`, and `SO2` |
-| Feature engineering | Time features, cyclic encodings, lag features, rolling means, rolling standard deviations, region indicators |
-| Evaluation | Chronological train/validation/test split, RMSE, MAE, R2, region-wise metrics, plots, reports |
-| Risk layer | AQI-style category, health recommendation, and pollutant driver summary |
-| Anomaly layer | Spike detection for elevated PM2.5, PM10, and SO2 scenarios |
-| Explainability | Tree feature-importance summaries with graceful fallback if optional SHAP tooling is unavailable |
-| Applications | Streamlit dashboard, FastAPI API, CLI predictor, GitHub Pages website |
-| Deployment | Dockerfile, Render config, reusable model artifact, Colab notebook, tests |
+| Data processing | Python, Pandas, NumPy |
+| Modeling | Scikit-learn, Random Forest, multi-output and single-target regression |
+| Evaluation | RMSE, MAE, R2, chronological split, region-wise reports |
+| Visualization | Matplotlib, Seaborn, Streamlit charts |
+| Dashboard | Streamlit |
+| API | FastAPI |
+| Artifact management | Joblib |
+| Deployment | Docker, Render config, GitHub Pages |
+| Notebook workflow | Google Colab |
 
-## What We Have Done
-
-- Built a reproducible pipeline for inconsistent `.xlsx`, `.xls`, and `.xlsb` DCR workbooks.
-- Combined four regional monitoring datasets into one modeling-ready dataset.
-- Created a structured `airsense/` Python package for AQI logic, anomaly detection, inference, feature engineering, explainability, preprocessing, and modeling.
-- Trained baseline, multi-output, and single-target forecasting models.
-- Exported a portable `inference_bundle.joblib` artifact used by every runtime surface.
-- Added a Streamlit dashboard with:
-  - Overview
-  - Live Prediction
-  - Region Analytics
-  - Model Performance
-  - Explainability
-  - Anomaly Detection
-  - AI Report
-  - Project Details
-- Added a FastAPI app with:
-  - `/health`
-  - `/metadata`
-  - `/predict`
-- Added a CLI prediction script for terminal checks.
-- Added reports, model card, limitations, experiment summary, and deployment documentation.
-- Built a professional GitHub Pages website in `docs/`.
-- Added automated tests for important runtime behavior.
-
-## System Architecture
+## Project Workflow
 
 ```mermaid
 flowchart TD
-    A["Raw DCR zip archives"] --> B["Workbook extraction"]
-    B --> C["Sheet discovery and header normalization"]
-    C --> D["Timestamp parsing and duplicate handling"]
-    D --> E["All-region combined dataset"]
-    E --> F["Feature engineering"]
-    F --> G["Model training"]
-    G --> H["Evaluation reports and plots"]
-    G --> I["Inference bundle"]
-    I --> J["Streamlit dashboard"]
-    I --> K["FastAPI service"]
-    I --> L["CLI predictor"]
-    H --> M["GitHub Pages project website"]
+    A["Raw Pollution Data"] --> B["Data Cleaning"]
+    B --> C["Feature Engineering"]
+    C --> D["ML Model Training"]
+    D --> E["Model Evaluation"]
+    E --> F["AQI Risk Engine"]
+    F --> G["Dashboard Insights"]
+    D --> H["Inference Bundle"]
+    H --> I["Streamlit Dashboard"]
+    H --> J["FastAPI Service"]
+    H --> K["CLI Predictor"]
 ```
 
-## Data Coverage
+## Dataset Summary
 
-The combined dataset was prepared from four supplied DCR regional archives.
+| Metric | Value | Interpretation |
+|---|---:|---|
+| Total cleaned records | 586,431 | Large processed dataset after cleaning |
+| Quarter-hourly records | 467,188 | High-resolution raw monitoring data |
+| Hourly records used by model | 119,243 | Aggregated time-series modeling data |
+| Regions processed | 4 | AIIMS, Bhatagaon, IGKV, Siltara |
+| Forecast targets | 3 | PM2.5, PM10, SO2 |
+| Engineered features | 201 | Lag, rolling, time, and region features |
+| Test rows | 15,772 | Final evaluation sample size |
 
-| Region | Total rows | Hourly rows | Quarter-hourly rows |
-|---|---:|---:|---:|
-| AIIMS | 154,109 | 30,000 | 124,109 |
-| Bhatagaon | 147,966 | 29,395 | 118,571 |
-| IGKV | 151,801 | 29,891 | 121,910 |
-| SILTARA | 132,555 | 29,957 | 102,598 |
+Insight: the dataset is large enough for a strong student-level predictive modeling project. The raw monitoring data was transformed into hourly machine-learning-ready features using cleaning, aggregation, and feature engineering.
 
-Overall dataset:
+## Global Model Performance
 
-| Metric | Value |
-|---|---:|
-| Total cleaned rows | 586,431 |
-| Quarter-hourly rows | 467,188 |
-| Hourly rows | 119,243 |
-| Regions | 4 |
-| Forecast targets | 3 |
-| Engineered model features | 201 |
+| Target | Best Strategy | RMSE | MAE | R2 | Status | Interpretation |
+|---|---|---:|---:|---:|---|---|
+| PM10 | Single-target | 31.10 | 18.29 | 0.581 | Good baseline | Stable global forecasting performance |
+| SO2 | Single-target | 2.39 | 1.26 | 0.431 | Moderate | Reasonable but can improve with more features |
+| PM2.5 | Multi-output | 76.62 | 6.94 | 0.044 | Needs region-specific modeling | Global PM2.5 behavior varies significantly by region |
 
-Large raw and processed datasets are intentionally excluded from Git. Recreate them locally or in Colab with the provided scripts.
+The global model performs best for PM10 forecasting with R2 = `0.581`. SO2 shows moderate global performance with R2 = `0.431`. PM2.5 performs weakly in the global multi-output setting because PM2.5 concentration patterns vary significantly across regions. Therefore, region-specific evaluation was added to better capture local pollution behavior.
 
-## Modeling Approach
+## Region-Specific Model Performance
 
-### Targets
+| Region | Target | Best R2 | Performance Level | Notes |
+|---|---|---:|---|---|
+| IGKV | PM2.5 | 0.840 | Strong | Clean region-level PM2.5 forecasting signal |
+| AIIMS | PM2.5 | 0.819 | Strong | Medical/residential PM2.5 forecasting signal |
+| IGKV | PM10 | 0.769 | Good | Cleaner baseline PM10 behavior |
+| AIIMS | PM10 | 0.742 | Good | Mixed urban PM10 behavior |
+| SILTARA | PM2.5 | 0.585 | Good baseline | Industrial-region PM2.5 behavior |
+| AIIMS | SO2 | 0.502 | Moderate | Region-level SO2 behavior |
 
-- `pm2_5`
-- `pm10`
-- `so2`
+Region-level results are much stronger than the global PM2.5 result. This shows that localized forecasting can capture local pollution behavior more effectively than one global model for every region and pollutant.
 
-### Feature Families
+Recommended final strategy: use single-target and region-specific models for PM2.5 and PM10 instead of depending only on one global multi-output model.
 
-- Current pollutant readings
-- Weather readings
-- Date and time features
-- Cyclic hour, minute, weekday, month, and day-of-year encodings
-- Lag features
-- Rolling mean features
-- Rolling standard deviation features
-- Region one-hot indicators
-- Missing-value indicators through model imputation
+## How to Interpret the Results
 
-### Model Strategies
+| Area | Status | R2 | Explanation |
+|---|---|---:|---|
+| PM10 Global Forecasting | Good baseline | 0.581 | PM10 shows the strongest global model performance. The engineered features capture a meaningful portion of PM10 variation across regions. |
+| SO2 Global Forecasting | Moderate | 0.431 | SO2 is more difficult to forecast globally but still shows usable predictive signal. More industrial, meteorological, or emission-source features may improve it. |
+| PM2.5 Global Forecasting | Needs region-specific modeling | 0.044 | PM2.5 patterns are highly region-dependent. The global multi-output model does not capture these variations well, while region-level PM2.5 modeling improves performance significantly. |
 
-| Strategy | Purpose |
-|---|---|
-| `baseline_median` | Simple benchmark to prove model lift over a naive baseline |
-| `multi_output` | One model predicts PM2.5, PM10, and SO2 together |
-| `single_target` | Separate model per pollutant |
-| `best` | Inference-time strategy selection by region and target |
+This analysis demonstrates model diagnosis and improvement strategy, not only model training.
 
-### Evaluation Design
+## Visual Evidence
 
-- Chronological split to reduce time-series leakage
-- Train, validation, and test reports
-- Overall metrics by target
-- Region-wise metrics by target
-- Model comparison leaderboard
-- Prediction plots and scatter plots
-- Reusable JSON and CSV reports
+### Metric Comparison
+
+![Metric comparison](docs/assets/metric_comparison.png)
+
+### Best Strategy Heatmap
+
+![Best strategy RMSE heatmap](docs/assets/best_strategy_rmse_heatmap.png)
+
+### Region Prediction Timeline
+
+![Region prediction time series](docs/assets/region_prediction_timeseries.png)
 
 ## Application Layer
 
@@ -173,50 +160,6 @@ That artifact is reused by:
 | Shared inference package | [`airsense/inference.py`](airsense/inference.py) |
 
 Set `AIRSENSE_MODEL_DIR` to choose which trained run to serve. By default, the runtime looks for `outputs/air_quality_models` first, then falls back to `outputs/smoke_air_quality_models`.
-
-## Website and Dashboard
-
-The project includes two user-facing experiences.
-
-### GitHub Pages Website
-
-The static website in [`docs/`](docs/) includes:
-
-- Live forecast preview
-- Dataset summary
-- Data and modeling pipeline
-- Model result plots
-- Explainability section
-- Anomaly detection section
-- AI report preview
-- Project capability mapping
-
-### Streamlit Dashboard
-
-The dashboard is the interactive application layer for local or deployed use:
-
-- Live Prediction with scenario loading
-- AQI-style risk cards
-- Region analytics
-- Model performance tables and plots
-- Feature-importance explainability
-- Anomaly review
-- Downloadable AI report
-- Project details and capability mapping
-
-## Visual Evidence
-
-### Metric Comparison
-
-![Metric comparison](docs/assets/metric_comparison.png)
-
-### Best Strategy Heatmap
-
-![Best strategy RMSE heatmap](docs/assets/best_strategy_rmse_heatmap.png)
-
-### Region Prediction Timeline
-
-![Region prediction time series](docs/assets/region_prediction_timeseries.png)
 
 ## Repository Structure
 
@@ -268,11 +211,12 @@ reports/
 Dockerfile
 DEPLOYMENT.md
 render.yaml
+PROJECT_REPORT.md
 requirements.txt
 README.md
 ```
 
-## Quick Start
+## How to Run
 
 ### 1. Install dependencies
 
@@ -280,7 +224,7 @@ README.md
 python -m pip install -r requirements.txt
 ```
 
-### 2. Build the combined dataset
+### 2. Prepare the combined dataset
 
 ```powershell
 python scripts\prepare_combined_dataset.py `
@@ -301,13 +245,13 @@ python scripts\train_air_quality_models.py `
   --n-jobs 1
 ```
 
-### 4. Run the Streamlit dashboard
+### 4. Run the dashboard
 
 ```powershell
 streamlit run app\streamlit_app.py
 ```
 
-### 5. Run the FastAPI service
+### 5. Run the API
 
 ```powershell
 uvicorn app.api:app --host 0.0.0.0 --port 8000
@@ -316,7 +260,7 @@ uvicorn app.api:app --host 0.0.0.0 --port 8000
 ### 6. Run a CLI prediction
 
 ```powershell
-python scripts\predict_cli.py --region SILTARA --pm25 78 --pm10 145 --so2 14 --temp 31 --hum 62 --ws 2.1
+python scripts\predict_cli.py --region SILTARA --pm25 78 --pm10 145 --so2 14 --temp 31 --hum 62 --ws 3.2
 ```
 
 ### 7. Run tests
@@ -332,7 +276,7 @@ Invoke-RestMethod `
   -Method Post `
   -Uri http://127.0.0.1:8000/predict `
   -ContentType "application/json" `
-  -Body '{"region":"SILTARA","pm25":78,"pm10":145,"so2":14,"temperature":31,"humidity":62,"wind_speed":2.1,"timestamp":"2026-06-08T08:00:00"}'
+  -Body '{"region":"SILTARA","pm25":78,"pm10":145,"so2":14,"temperature":31,"humidity":62,"wind_speed":3.2,"timestamp":"2026-06-08T09:00:00"}'
 ```
 
 ## Colab Final Training
@@ -350,7 +294,7 @@ python scripts\train_air_quality_models.py `
   --n-jobs -1
 ```
 
-Recommended final workflow:
+Recommended workflow:
 
 1. Upload the four raw DCR zip files.
 2. Run dataset preparation.
@@ -359,97 +303,52 @@ Recommended final workflow:
 5. Replace the images in `docs/assets/`.
 6. Point `AIRSENSE_MODEL_DIR` at `outputs/air_quality_models`.
 
-## Deployment
+## Project Details
 
-This repository includes:
+### Problem
 
-- `Dockerfile`
-- `render.yaml`
-- `DEPLOYMENT.md`
-- Streamlit app
-- FastAPI app
-- GitHub Pages static website
+Air pollution monitoring data is messy, time-dependent, and region-specific. Manual analysis makes it difficult to forecast pollutant levels and understand environmental risk.
 
-Typical deployment surfaces:
+### Solution
 
-| Target | Use |
-|---|---|
-| GitHub Pages | Static website from `docs/` |
-| Streamlit Community Cloud or local Streamlit | Dashboard |
-| Render | FastAPI service |
-| Docker | Portable app packaging |
-| Colab | Full training workflow |
+AirSense AI cleans raw pollution data, engineers time-series features, trains forecasting models, evaluates global and region-wise performance, detects spikes, and presents insights through a dashboard and API.
 
-## Project Strengths
+### ML Concepts
 
-- Handles messy, real-world environmental monitoring files.
-- Shows end-to-end ML work, not only notebook modeling.
-- Uses chronological evaluation for time-series validation.
-- Packages inference once and reuses it across dashboard, API, and CLI.
-- Includes clear model documentation, limitations, tests, and deployment files.
-- Displays results through a professional website and dashboard.
-
-## Validation Results
-
-The current repository includes an hourly runtime artifact used to validate the full modeling and application workflow. The pipeline also supports a higher-resolution quarter-hourly training run through the Colab workflow.
-
-### Dataset Summary
-
-| Result | Value |
-|---|---:|
-| Total cleaned records | 586,431 |
-| Quarter-hourly records | 467,188 |
-| Hourly records used by current model | 119,243 |
-| Regions processed | 4 |
-| Forecast targets | 3 |
-| Engineered features | 201 |
-| Test rows in current hourly artifact | 15,772 |
-
-### Overall Test Metrics
-
-| Target | Best strategy | RMSE | MAE | R2 |
-|---|---|---:|---:|---:|
-| PM10 | Single-target | 31.10 | 18.29 | 0.581 |
-| SO2 | Single-target | 2.39 | 1.26 | 0.431 |
-| PM2.5 | Multi-output | 76.62 | 6.94 | 0.044 |
-
-### Best Region-Level Results
-
-| Region | Target | Best R2 | Notes |
-|---|---|---:|---|
-| IGKV | PM2.5 | 0.840 | Clean-region PM2.5 forecasting signal |
-| AIIMS | PM2.5 | 0.819 | Medical/residential PM2.5 forecasting signal |
-| IGKV | PM10 | 0.769 | Cleaner baseline PM10 behavior |
-| AIIMS | PM10 | 0.742 | Mixed urban PM10 behavior |
-| SILTARA | PM2.5 | 0.585 | Industrial-region PM2.5 behavior |
-| AIIMS | SO2 | 0.502 | Region-level SO2 behavior |
-
-## Current Scope and Roadmap
-
-The project is complete as an end-to-end ML system and ready to demonstrate the full workflow:
-
-- Real-world data ingestion and cleaning
-- Multi-region time-series feature engineering
-- Forecasting model with proper chronological evaluation
-- AQI-style risk interpretation
-- Anomaly detection
+- Regression
+- Time-series feature engineering
+- Lag features
+- Rolling statistics
+- Region encoding
+- Model evaluation
+- Error analysis
 - Explainability
-- Streamlit dashboard
-- FastAPI endpoint
-- CLI predictor
-- GitHub Pages website
-- Deployment-ready structure
+- Anomaly detection
 
-Planned model-quality upgrades:
+### Limitations
 
-- Run the full quarter-hourly training workflow in Colab.
-- Refresh the website plots with final quarter-hourly artifacts.
-- Add region-specific residual analysis for PM2.5.
-- Add outlier review and treatment for sensor spikes.
-- Compare Random Forest with gradient boosting models for the final artifact.
+- PM2.5 global model performance is weak.
+- Region-specific models are more reliable for PM2.5.
+- More weather and emission-source features can improve forecasting.
+- AQI risk interpretation is a simplified project-level layer.
+
+### Future Scope
+
+- Real-time pollution board API integration
+- 24-hour forecasting
+- Region-specific production models
+- Geospatial heatmap
+- LLM-based report generation
+- Email or WhatsApp alerts
+- Model monitoring and retraining
+
+## Interview Demo Script
+
+AirSense AI is an end-to-end air pollution forecasting dashboard. I processed 586,431 cleaned records from four monitoring regions and engineered 201 features for predicting PM2.5, PM10, and SO2. The global PM10 model achieved an R2 of 0.581, which is a good baseline for noisy environmental data. SO2 achieved moderate performance with R2 of 0.431. PM2.5 had weak global performance because pollution behavior changes significantly across regions. To solve this, I performed region-level evaluation, where PM2.5 forecasting improved strongly: IGKV reached R2 of 0.840 and AIIMS reached R2 of 0.819. The dashboard presents these results with AQI risk interpretation, anomaly detection, and explainability so the project works like an AI monitoring product instead of just a notebook.
 
 ## Notes
 
-- The bundled runtime artifact is optimized for local validation and application readiness.
-- AQI-style categories are project risk labels, not certified regulatory AQI or medical advice.
+- AQI interpretation is a simplified project-level risk layer and not an official regulatory AQI calculation.
+- Spike detection is based on statistical deviation from recent trends and should be verified with official monitoring systems.
+- The report generator uses a rule-based NLP-style summarization template and can be upgraded with an LLM-based summarizer.
 - Large raw and processed datasets are excluded from Git and can be regenerated with the provided pipeline.

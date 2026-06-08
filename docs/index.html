@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AirSense AI - Multi-Region Air Quality Intelligence</title>
+    <title>AirSense AI - Air Pollution Forecasting & Risk Analytics Dashboard</title>
     <meta
       name="description"
-      content="A multi-region air-quality intelligence platform that transforms DCR monitoring data into PM2.5, PM10, and SO2 forecasts with risk analytics."
+      content="An intelligent air pollution forecasting and risk analytics dashboard for PM2.5, PM10, SO2, region-wise evaluation, explainability, and anomaly detection."
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -47,7 +47,7 @@
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-overlay"></div>
         <div class="hero-content">
-          <p class="eyebrow">Environmental Intelligence Platform</p>
+          <p class="eyebrow">Air Pollution Forecasting & Risk Analytics System</p>
           <h1 id="hero-title">AirSense <span>AI</span></h1>
           <p class="hero-copy">
             Multi-region air-quality forecasting that transforms real DCR monitoring records
@@ -157,7 +157,7 @@
             </div>
 
             <div class="preset-row" aria-label="Example input presets">
-              <button type="button" class="preset-card preset-card-primary" data-preset="siltara">Load Siltara Scenario</button>
+              <button type="button" class="preset-card preset-card-primary" data-preset="demo">Run Demo Scenario</button>
               <button type="button" class="preset-card" data-preset="clean">Clean Area</button>
               <button type="button" class="preset-card" data-preset="traffic">Traffic Peak</button>
               <button type="button" class="preset-card" data-preset="industrial">Industrial Zone</button>
@@ -368,9 +368,9 @@
           <p class="eyebrow">Modeling Evidence</p>
           <h2 id="results-title">Validated outputs from the current hourly model</h2>
           <p>
-            These plots summarize the current deployable hourly artifact. PM10 and SO2 show
-            useful signal; PM2.5 should be improved with the full quarter-hourly training run
-            before making strong accuracy claims.
+            These plots summarize the current deployable hourly artifact. PM10 shows the
+            strongest global result, SO2 shows moderate global signal, and PM2.5 requires
+            region-specific modeling because local behavior varies strongly by monitoring region.
           </p>
         </div>
 
@@ -409,9 +409,10 @@
         </div>
 
         <div class="result-note">
-          <strong>Submission assessment:</strong>
-          PM10 and SO2 are solid enough for a professional project showcase. PM2.5 needs a stronger
-          final training pass before presenting the model as high-accuracy forecasting.
+          <strong>Model interpretation:</strong>
+          The global PM2.5 model has weak performance because PM2.5 behavior varies strongly
+          across regions. Region-specific evaluation improves PM2.5 forecasting significantly,
+          reaching R2 = 0.840 for IGKV and R2 = 0.819 for AIIMS.
         </div>
       </section>
 

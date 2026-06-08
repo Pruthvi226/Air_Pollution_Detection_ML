@@ -65,6 +65,49 @@ def generate_health_recommendation(category: str) -> str:
     return AQI_CATEGORIES[1]["recommendation"]
 
 
+def classify_aqi_risk(pm25: Any, pm10: Any, so2: Any = 0) -> dict[str, Any]:
+    """Simplified project-level AQI-style risk layer for dashboard display."""
+    pm25_value = _to_float(pm25)
+    pm10_value = _to_float(pm10)
+    so2_value = _to_float(so2)
+
+    if pm25_value <= 30 and pm10_value <= 50 and so2_value <= 15:
+        category = "Good"
+        risk_level = "Low"
+        color = "#22c55e"
+        message = "Air quality appears acceptable for normal outdoor activity."
+    elif pm25_value <= 60 and pm10_value <= 100 and so2_value <= 30:
+        category = "Moderate"
+        risk_level = "Elevated"
+        color = "#facc15"
+        message = "Sensitive groups should monitor symptoms during prolonged outdoor activity."
+    elif pm25_value <= 90 and pm10_value <= 250 and so2_value <= 40:
+        category = "Poor"
+        risk_level = "High"
+        color = "#f97316"
+        message = "Sensitive groups should reduce prolonged outdoor exposure."
+    elif pm25_value <= 120 and pm10_value <= 350 and so2_value <= 80:
+        category = "Very Poor"
+        risk_level = "Very High"
+        color = "#ef4444"
+        message = "Limit outdoor exposure and use protective measures when possible."
+    else:
+        category = "Severe"
+        risk_level = "Severe"
+        color = "#991b1b"
+        message = "Avoid prolonged outdoor exposure and verify conditions with official monitoring sources."
+
+    return {
+        "category": category,
+        "risk_level": risk_level,
+        "message": message,
+        "recommendation": message,
+        "badge_color": color,
+        "color": color,
+        "disclaimer": "This AQI interpretation is a simplified project-level risk layer and not an official regulatory AQI calculation.",
+    }
+
+
 def calculate_pollutant_risk(pm25: Any, pm10: Any, so2: Any) -> dict[str, Any]:
     pm25_value = _to_float(pm25)
     pm10_value = _to_float(pm10)
@@ -102,6 +145,6 @@ def summarize_prediction(prediction_dict: Mapping[str, Any]) -> str:
     risk = calculate_pollutant_risk(pm25, pm10, so2)
     return (
         f"Predicted PM2.5 is {pm25:.1f}, PM10 is {pm10:.1f}, and SO2 is {so2:.1f}. "
-        f"The demo AQI-style category is {risk['category']} with {risk['risk_level'].lower()} risk. "
+        f"The project AQI-style category is {risk['category']} with {risk['risk_level'].lower()} risk. "
         f"{risk['recommendation']}"
     )

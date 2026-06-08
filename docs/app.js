@@ -7,16 +7,16 @@
   };
 
   const presets = {
-    siltara: {
+    demo: {
       region: "SILTARA",
       pm25: 78,
       pm10: 145,
       so2: 14,
       temp: 31,
       humidity: 62,
-      wind: 2.1,
-      hour: 8,
-      month: 12,
+      wind: 3.2,
+      hour: 9,
+      month: 6,
     },
     clean: {
       region: "IGKV",
@@ -47,9 +47,9 @@
       so2: 14,
       temp: 31,
       humidity: 62,
-      wind: 2.1,
-      hour: 8,
-      month: 12,
+      wind: 3.2,
+      hour: 9,
+      month: 6,
     },
   };
 
