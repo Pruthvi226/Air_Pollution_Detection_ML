@@ -12,8 +12,26 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from airsense.config import PROJECT_VERSION, SUPPORTED_REGIONS, TARGET_COLUMNS
 from airsense.explainability import get_feature_importance
-from airsense.inference import ModelNotReadyError, build_metadata, load_model_bundle, predict
+from airsense.inference import ModelNotReadyError, load_model_bundle, predict
+
+try:
+    from airsense.inference import build_metadata
+except ImportError:
+    def build_metadata(bundle: dict) -> dict:
+        return {
+            "project": "AirSense AI",
+            "version": PROJECT_VERSION,
+            "targets": list(bundle.get("target_columns", TARGET_COLUMNS)),
+            "feature_names": list(bundle.get("feature_columns", [])),
+            "feature_count": int(len(bundle.get("feature_columns", []))),
+            "supported_regions": SUPPORTED_REGIONS,
+            "trained_at": bundle.get("metadata", {}).get("trained_at", "generated smoke artifact"),
+            "granularity": bundle.get("metadata", {}).get("granularity", "unknown"),
+            "model_dir": bundle.get("model_dir"),
+            "strategies": ["best", "multi_output", "single_target"],
+        }
 
 
 st.set_page_config(page_title="AirSense AI", layout="wide")
